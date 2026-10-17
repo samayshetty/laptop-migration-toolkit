@@ -1,0 +1,12 @@
+# Migration packages and backups - never commit these
+Package/
+MigrationPackage*/
+MigrationBackup*/
+
+# Logs and temp
+*.log
+*.tmp
+
+# Windows
+Thumbs.db
+Desktop.ini
