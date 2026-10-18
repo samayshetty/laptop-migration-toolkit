@@ -1,4 +1,12 @@
-# No Administrator Rights
+# 🔓 No Administrator Rights
+
+<div align="center">
+
+[Home](Home) &#183; [Getting Started](Getting-Started) &#183; [Collect](Collect-from-the-Old-Laptop) &#183; [Verify](Verify-the-Package) &#183; [Restore](Restore-on-the-New-Laptop) &#183; [App Modes](App-Selection-and-Granularity) &#183; [Conflicts](Conflicts-and-Version-Mismatch) &#183; [Security](Security-and-Privacy) &#183; [No Admin](No-Administrator-Rights) &#183; [Troubleshooting](Troubleshooting) &#183; [FAQ](FAQ)
+
+</div>
+
+---
 
 Many corporate laptops are locked down: you are a **standard user** and cannot get
 Administrator rights (UAC asks for credentials you do not have). The toolkit is built

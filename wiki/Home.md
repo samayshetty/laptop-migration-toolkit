@@ -1,33 +1,104 @@
-# laptop-migration-toolkit Wiki
+<div align="center">
 
-Welcome! This toolkit moves a Windows laptop setup (apps, settings, visuals,
-developer and AI-agent configurations, files) from an old laptop to a new one -
-with per-app control and safe conflict handling.
+<img src="https://raw.githubusercontent.com/samayshetty/laptop-migration-toolkit/main/assets/banner.svg" alt="laptop-migration-toolkit" width="100%">
 
-## Three steps
+<br>
 
-1. [Collect from the old laptop](Collect-from-the-Old-Laptop)
-2. [Verify the package](Verify-the-Package)
-3. [Restore on the new laptop](Restore-on-the-New-Laptop)
+[![Version](https://img.shields.io/badge/version-1.0.1-6366f1?style=for-the-badge&labelColor=111827)](https://github.com/samayshetty/laptop-migration-toolkit/releases)
+[![MIT](https://img.shields.io/badge/license-MIT-22c55e?style=for-the-badge&labelColor=111827)](https://github.com/samayshetty/laptop-migration-toolkit/blob/main/LICENSE)
+[![PowerShell](https://img.shields.io/badge/PowerShell-5.1-5391FE?style=for-the-badge&labelColor=111827&logo=powershell&logoColor=white)](https://github.com/samayshetty/laptop-migration-toolkit)
+[![Repo](https://img.shields.io/badge/repo-laptop--migration--toolkit-0ea5e9?style=for-the-badge&labelColor=111827&logo=github)](https://github.com/samayshetty/laptop-migration-toolkit)
 
-## Everything else
+### 🖥️ ➜ 💻 &nbsp; Your whole Windows setup, from one laptop to the next
 
-- [Getting Started](Getting-Started) - requirements and the 5-minute overview
-- [App Selection and Granularity](App-Selection-and-Granularity) - install app + data, app only, data only, or skip
-- [Conflicts and Version Mismatch](Conflicts-and-Version-Mismatch) - what happens when the laptops differ
-- [Security and Privacy](Security-and-Privacy) - what is sensitive in a package and how to handle it
-- [No Administrator Rights](No-Administrator-Rights) - migrating from a locked-down, standard-user laptop
-- [Troubleshooting](Troubleshooting) - common errors and fixes
-- [FAQ](FAQ) - licenses, browsers, corporate laptops and more
+<p>
+<a href="Getting-Started"><kbd>🚀 Getting started</kbd></a>
+<a href="Collect-from-the-Old-Laptop"><kbd>📦 Collect</kbd></a>
+<a href="Verify-the-Package"><kbd>🔍 Verify</kbd></a>
+<a href="Restore-on-the-New-Laptop"><kbd>⚡ Restore</kbd></a>
+<a href="No-Administrator-Rights"><kbd>🔓 No admin?</kbd></a>
+<a href="Troubleshooting"><kbd>🧰 Troubleshooting</kbd></a>
+</p>
 
-## What the scripts are
+</div>
 
-| Script | Runs on | Purpose |
-| --- | --- | --- |
-| `Collect-OldLaptop.ps1` | Old laptop | Builds the migration package |
-| `Verify-Package.ps1` | New laptop | Read-only package review |
-| `Restore-NewLaptop.ps1` | New laptop | Interactive plan + restore |
+---
 
-All scripts are plain PowerShell - they work on any Windows 10/11 pair and need
-no agents or vendor tools. Everything they change on the new laptop is backed up
-first into a `MigrationBackup-<date>` folder on the Desktop.
+## 🚦 The three steps
+
+```mermaid
+flowchart LR
+    A["🖥️ OLD laptop"] -->|"📦 Collect-OldLaptop.ps1"| B[("🗂️ Migration package")]
+    B -->|"🔍 Verify-Package.ps1"| C{"👀 Review the plan"}
+    C -->|"⚡ Restore-NewLaptop.ps1"| D["💻 NEW laptop"]
+```
+
+| | Step | Script | Runs on |
+| :--: | :-- | :-- | :--: |
+| 📦 | **[Collect](Collect-from-the-Old-Laptop)** | `Collect-OldLaptop.ps1` | 🖥️ old |
+| 🔍 | **[Verify](Verify-the-Package)** | `Verify-Package.ps1` | 💻 new |
+| ⚡ | **[Restore](Restore-on-the-New-Laptop)** | `Restore-NewLaptop.ps1` | 💻 new |
+
+> [!TIP]
+> Start with **[Getting Started](Getting-Started)** for requirements and the 5-minute overview.
+
+---
+
+## 📚 Browse the wiki
+
+<table>
+<tr>
+<td valign="top" width="50%">
+
+**🚀 Start here**
+- [🏠 Home](Home)
+- [🚀 Getting Started](Getting-Started)
+- [📦 Collect from the Old Laptop](Collect-from-the-Old-Laptop)
+- [🔍 Verify the Package](Verify-the-Package)
+- [⚡ Restore on the New Laptop](Restore-on-the-New-Laptop)
+
+</td>
+<td valign="top" width="50%">
+
+**🎛️ Details &amp; help**
+- [🎛️ App Selection and Granularity](App-Selection-and-Granularity)
+- [⚠️ Conflicts and Version Mismatch](Conflicts-and-Version-Mismatch)
+- [🔐 Security and Privacy](Security-and-Privacy)
+- [🔓 No Administrator Rights](No-Administrator-Rights)
+- [🧰 Troubleshooting](Troubleshooting)
+- [❓ FAQ](FAQ)
+
+</td>
+</tr>
+</table>
+
+---
+
+## ✨ What you get
+
+| | |
+| :-- | :-- |
+| 🧰 **Apps** | winget inventory, per-app install / data / both / skip |
+| 🎨 **Visuals** | theme, taskbar layout &amp; pins, wallpaper, input &amp; region |
+| 🧑‍💻 **Dev &amp; agents** | VS Code, Windows Terminal, PowerShell profiles, opencode / Claude / Codex / Gemini / Cursor, dotfiles |
+| 📶 **Wi-Fi** | profiles with passwords (collected elevated) |
+| 🔤 **Fonts &amp; env** | user-installed fonts, user environment variables, power scheme |
+| 🗂️ **Files** | optional Desktop / Documents / Downloads / Pictures / Videos / Music |
+
+Everything the scripts overwrite is **backed up first** into a `MigrationBackup-<date>`
+folder on the Desktop, with a full `restore-log.txt`.
+
+> [!NOTE]
+> **No Administrator rights?** Only Wi-Fi passwords and the power scheme need them -
+> everything else is collected and restored as a standard user.
+> See **[No Administrator Rights](No-Administrator-Rights)**.
+
+---
+
+<div align="center">
+
+**→ Back to the [repository](https://github.com/samayshetty/laptop-migration-toolkit)**
+
+<sub>laptop-migration-toolkit · MIT · PowerShell 5.1 · Windows 10/11</sub>
+
+</div>

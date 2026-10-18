@@ -34,6 +34,9 @@ Standard-user support and smaller, faster packages.
   still collected. Use `-IncludeVscodeHistory` and `-IncludeCursorExtensions` to keep
   the old behaviour.
 - All scripts bumped to `1.0.1`.
+- The README and the wiki were restyled: SVG banner, shields.io badges, emoji
+  section headings, a consistent navigation bar on every wiki page, colour-coded
+  GitHub alerts, collapsible parameters reference and a Mermaid flow diagram.
 
 ## [1.0.0] - 2026-10-17
 
