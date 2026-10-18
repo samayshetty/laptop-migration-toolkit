@@ -9,8 +9,10 @@
 .\Restore-NewLaptop.ps1 -PackagePath "$env:OneDriveCommercial\MigrationPackage"
 ```
 
-Run it in an **Administrator** PowerShell (power scheme import needs it; the
-script offers to self-elevate if you forget).
+An **Administrator** PowerShell is recommended (the power scheme import needs it).
+If you are not an Administrator, do not worry: the script detects that, does not ask
+for elevation you cannot grant, marks the power scheme as SKIP, restores everything
+else and reminds you at the end - see [No Administrator Rights](No-Administrator-Rights).
 
 ## The plan editor
 

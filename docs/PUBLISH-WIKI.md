@@ -34,7 +34,8 @@ same name in the GitHub UI, and paste the content:
 
 Home, Getting-Started, Collect-from-the-Old-Laptop, Verify-the-Package,
 Restore-on-the-New-Laptop, App-Selection-and-Granularity,
-Conflicts-and-Version-Mismatch, Security-and-Privacy, Troubleshooting, FAQ.
+Conflicts-and-Version-Mismatch, Security-and-Privacy, No-Administrator-Rights,
+Troubleshooting, FAQ.
 
 ## Updating later
 

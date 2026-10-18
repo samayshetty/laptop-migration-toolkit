@@ -14,7 +14,7 @@ param(
     [switch]$SkipUserFiles
 )
 
-$ToolkitVersion = '1.0.0'
+$ToolkitVersion = '1.0.1'
 $ErrorActionPreference = 'Continue'
 $ProgressPreference = 'SilentlyContinue'
 
@@ -53,11 +53,25 @@ function Test-Admin {
     return $principal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
 }
 
+function Test-AdminGroup {
+    try {
+        $id = [Security.Principal.WindowsIdentity]::GetCurrent()
+        $sid = New-Object System.Security.Principal.SecurityIdentifier('S-1-5-32-544')
+        return [bool]($id.Groups -contains $sid)
+    } catch {
+        return $false
+    }
+}
+
 function Invoke-SelfElevate {
     param([switch]$NoElevate)
     if (Test-Admin) { return $false }
     if ($NoElevate -or $script:NotInteractive) { return $false }
-    $answer = Read-Host 'Some steps (power scheme, fonts) work best elevated. Relaunch this script as Administrator? (Y/n)'
+    if (-not $script:InAdminGroup) {
+        Log 'This account has no Administrator rights - continuing in standard-user mode (Administrator-only steps will be skipped)' 'WARN'
+        return $false
+    }
+    $answer = Read-Host 'The power scheme step works best elevated. Relaunch this script as Administrator? (Y/n)'
     if ($answer -match '^(n|no)') { return $false }
     $forward = @('-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', ('"' + $PSCommandPath + '"'))
     foreach ($k in $PSBoundParameters.Keys) {
@@ -266,6 +280,7 @@ function Build-Plan {
         if ($def.Id -eq 'wifi' -and $SkipWifi) { $apply = $false; $note = 'skipped by switch' }
         if ($def.Id -eq 'fonts' -and $SkipFonts) { $apply = $false; $note = 'skipped by switch' }
         if ($def.Id -eq 'env' -and $SkipEnvVars) { $apply = $false; $note = 'skipped by switch' }
+        if ($def.Id -eq 'power' -and -not $script:IsAdmin) { $apply = $false; $note = 'needs Administrator - skipped now (re-run this script elevated later to apply it)' }
         New-PlanItem -Id $def.Id -Name $def.Name -Present $true -Apply $apply -Note $note
     }
 
@@ -721,9 +736,14 @@ Write-Host (' laptop-migration-toolkit v' + $ToolkitVersion) -ForegroundColor Cy
 Write-Host ' RESTORE - run this on the NEW laptop                    ' -ForegroundColor Cyan
 Write-Host '=========================================================' -ForegroundColor Cyan
 
+$script:InAdminGroup = Test-AdminGroup
 if (Invoke-SelfElevate -NoElevate:$NoElevate) { exit 0 }
 $isAdmin = Test-Admin
-if (-not $isAdmin) { Log 'Running without Administrator rights - power scheme may be skipped' 'WARN' }
+$script:IsAdmin = $isAdmin
+if (-not $isAdmin) {
+    if ($script:InAdminGroup) { Log 'Running without Administrator rights - the power scheme step will be skipped (re-run elevated later to include it)' 'WARN' }
+    else { Log 'Standard user account (no Administrator rights) - Administrator-only steps will be skipped; everything else is restored normally' 'WARN' }
+}
 
 $script:PackagePath = [IO.Path]::GetFullPath($PackagePath)
 $infoFile = Join-Path $script:PackagePath 'system-info.json'
@@ -805,5 +825,10 @@ Write-Host (" Restore finished: {0} warnings, {1} errors" -f $warns, $errors) -F
 Write-Host '=========================================================' -ForegroundColor Cyan
 Write-Host " Backups of overwritten files/registry keys: $script:BackupRoot" -ForegroundColor Gray
 Write-Host " Full log: $reportPath" -ForegroundColor Gray
+if (-not $script:IsAdmin) {
+    Write-Host ' Skipped (Administrator rights required): Power scheme.' -ForegroundColor Yellow
+    Write-Host ' Everything else was restored. To apply the power scheme later, run this same' -ForegroundColor Gray
+    Write-Host ' script again from an Administrator PowerShell - re-running is safe.' -ForegroundColor Gray
+}
 Write-Host ' Sign out or reboot to fully apply everything.' -ForegroundColor White
 Write-Host ''

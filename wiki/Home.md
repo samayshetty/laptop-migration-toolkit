@@ -16,6 +16,7 @@ with per-app control and safe conflict handling.
 - [App Selection and Granularity](App-Selection-and-Granularity) - install app + data, app only, data only, or skip
 - [Conflicts and Version Mismatch](Conflicts-and-Version-Mismatch) - what happens when the laptops differ
 - [Security and Privacy](Security-and-Privacy) - what is sensitive in a package and how to handle it
+- [No Administrator Rights](No-Administrator-Rights) - migrating from a locked-down, standard-user laptop
 - [Troubleshooting](Troubleshooting) - common errors and fixes
 - [FAQ](FAQ) - licenses, browsers, corporate laptops and more
 

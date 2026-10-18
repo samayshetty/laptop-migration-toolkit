@@ -26,6 +26,13 @@ Use `Set-Location` to the folder containing the scripts, then `.\ScriptName.ps1`
 - **"Power scheme import failed"** - restore was not elevated. Re-run the
   restore elevated; everything else in the plan is already applied and safe to
   re-run.
+- **I have no Administrator rights at all** - that is fine. The restore detects it,
+  skips the power scheme (the only Administrator-only step), restores everything else
+  and prints a reminder. The run still reports 0 errors. See
+  [No Administrator Rights](No-Administrator-Rights).
+- **Elevation prompt repeats / "The operation was canceled by the user"** - the UAC
+  prompt was dismissed. The restore continues without Administrator rights, so just
+  let it run; no action is needed.
 
 ## winget problems
 

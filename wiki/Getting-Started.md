@@ -5,9 +5,10 @@
 - Windows 10 (1809 or newer) or Windows 11 on both laptops
 - PowerShell 5.1 (built into Windows - no installation needed)
 - `winget` (App Installer) on the new laptop for automatic app installation
-- Administrator rights recommended on both laptops:
-  - old: Wi-Fi passwords, power scheme
-  - new: power scheme import
+- Administrator rights are **optional** - a standard user can run everything:
+  - old laptop: only Wi-Fi passwords and the power scheme need elevation
+  - new laptop: only the power scheme import needs elevation (skipped automatically
+    if you are not an Administrator - see [No Administrator Rights](No-Administrator-Rights))
 - A transfer medium: OneDrive/SharePoint folder, USB drive, or a network share
 
 ## Step 0 - get the scripts

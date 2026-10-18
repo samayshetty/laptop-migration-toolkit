@@ -41,7 +41,8 @@ On a managed laptop:
 - Apps installed by IT (VPN clients, security agents, Office) are usually
   re-pushed by Company Portal automatically; the winget export may not contain
   them.
-- Wi-Fi export and power scheme need the elevation prompt to be accepted.
+- Wi-Fi export and power scheme need the elevation prompt to be accepted. Without
+  Administrator rights they are skipped and the rest of the package is unaffected.
 - Follow your company's data-handling rules when copying personal folders.
 
 ## Verifying package safety

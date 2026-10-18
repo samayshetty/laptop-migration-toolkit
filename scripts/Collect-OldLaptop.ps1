@@ -6,11 +6,14 @@ param(
     [string[]]$ExtraFolders = @(),
     [switch]$SkipApps,
     [switch]$SkipSSH,
+    [switch]$IncludeVscodeHistory,
+    [switch]$IncludeCursorExtensions,
+    [switch]$Archive,
     [switch]$NonInteractive,
     [switch]$NoElevate
 )
 
-$ToolkitVersion = '1.0.0'
+$ToolkitVersion = '1.0.1'
 $PackageFormat = 2
 $ErrorActionPreference = 'Continue'
 $ProgressPreference = 'SilentlyContinue'
@@ -68,11 +71,13 @@ function EnsureDir {
 }
 
 function CopyTree {
-    param([string]$Source, [string]$Destination)
+    param([string]$Source, [string]$Destination, [string[]]$ExcludeDirs = @())
     if (-not (Test-Path -LiteralPath $Source)) { return $false }
     try {
         EnsureDir $Destination | Out-Null
-        robocopy $Source $Destination /E /R:1 /W:1 /XJ /NFL /NDL /NJH /NJS /NP | Out-Null
+        $rcArgs = @($Source, $Destination, '/E', '/R:1', '/W:1', '/XJ', '/NFL', '/NDL', '/NJH', '/NJS', '/NP')
+        foreach ($xd in $ExcludeDirs) { $rcArgs += @('/XD', $xd) }
+        robocopy @rcArgs | Out-Null
         if ($LASTEXITCODE -ge 8) { throw "robocopy exit code $LASTEXITCODE" }
         return $true
     } catch {
@@ -296,7 +301,17 @@ foreach ($k in $terminals.Keys) {
 
 Log 'Collecting developer, agent and skill configurations...' 'STEP'
 $devDir = EnsureDir (Join-Path $OutputPath 'dev')
-if (CopyTree (Join-Path $env:APPDATA 'Code\User') (Join-Path $devDir 'vscode-user')) { Log 'VS Code user settings collected' 'OK' }
+$codeUser = Join-Path $env:APPDATA 'Code\User'
+if (Test-Path -LiteralPath $codeUser) {
+    $codeExclude = @()
+    if (-not $IncludeVscodeHistory) {
+        $codeExclude = @('History', 'workspaceStorage', 'CachedData', 'CachedExtensionVSIXs', 'Backups', 'logs') | ForEach-Object { Join-Path $codeUser $_ }
+    }
+    if (CopyTree $codeUser (Join-Path $devDir 'vscode-user') $codeExclude) {
+        if ($IncludeVscodeHistory) { Log 'VS Code user settings collected (including edit history and workspace storage)' 'OK' }
+        else { Log 'VS Code user settings collected (edit history / workspace storage excluded - use -IncludeVscodeHistory to keep them)' 'OK' }
+    }
+}
 if (Get-Command code -ErrorAction SilentlyContinue) {
     $exts = @(& code --list-extensions 2>$null | Where-Object { $_ })
     [IO.File]::WriteAllLines((Join-Path $devDir 'vscode-extensions.txt'), $exts)
@@ -312,8 +327,16 @@ foreach ($rel in $agentPaths) {
     $src = Join-Path $env:USERPROFILE $rel
     if (Test-Path -LiteralPath $src) {
         $dst = Join-Path $agentRoot $rel
-        if ((Get-Item -LiteralPath $src).PSIsContainer) { $null = CopyTree $src $dst } else { $null = CopyFileSafe $src $dst }
-        Log "Collected $rel" 'OK'
+        if ((Get-Item -LiteralPath $src).PSIsContainer) {
+            $ex = @()
+            if ($rel -eq '.cursor' -and -not $IncludeCursorExtensions) { $ex += (Join-Path $src 'extensions') }
+            $null = CopyTree $src $dst $ex
+            if ($ex.Count -gt 0) { Log "Collected $rel (installed extensions skipped - use -IncludeCursorExtensions to keep them)" 'OK' }
+            else { Log "Collected $rel" 'OK' }
+        } else {
+            $null = CopyFileSafe $src $dst
+            Log "Collected $rel" 'OK'
+        }
     }
 }
 $dotfiles = @('.gitconfig', '.gitignore_global', '.npmrc', '.yarnrc', '.wslconfig', '.vimrc', '.editorconfig', '.condarc', '.curlrc', '.terraformrc', '.profile', '.bashrc', '.zshrc', '.kube', '.aws', '.azure')
@@ -407,15 +430,49 @@ $report = [ordered]@{
 }
 $report | ConvertTo-Json -Depth 6 | Set-Content -LiteralPath (Join-Path $OutputPath 'collection-report.json') -Encoding UTF8
 
-$sum = (Get-ChildItem -LiteralPath $OutputPath -Recurse -File -Force -ErrorAction SilentlyContinue | Measure-Object -Property Length -Sum).Sum
+$collected = @(Get-ChildItem -LiteralPath $OutputPath -Recurse -File -Force -ErrorAction SilentlyContinue)
+$sum = ($collected | Measure-Object -Property Length -Sum).Sum
 if (-not $sum) { $sum = 0 }
 $errors = @($script:Findings | Where-Object { $_ -match '\] ERROR' }).Count
 $warns = @($script:Findings | Where-Object { $_ -match '\] WARN' }).Count
 
+if ($Archive) {
+    $zipPath = $OutputPath.TrimEnd('\') + '.zip'
+    $parent = Split-Path -Parent $OutputPath
+    $leaf = Split-Path -Leaf $OutputPath
+    if (Get-Command tar -ErrorAction SilentlyContinue) {
+        Log 'Creating a single-file archive (much faster to move or sync than many small files)...' 'STEP'
+        & tar -a -cf $zipPath -C $parent $leaf 2>&1 | Out-Null
+        if ((Test-Path -LiteralPath $zipPath) -and $LASTEXITCODE -le 1) {
+            Log ("Archive created: {0} ({1:N1} MB)" -f $zipPath, ((Get-Item -LiteralPath $zipPath).Length / 1MB)) 'OK'
+        } else {
+            Log 'Archive creation failed - the package folder itself is complete and usable' 'WARN'
+        }
+    } else {
+        Log 'tar.exe not found - cannot create the archive (use 7-Zip, or Explorer: right-click the folder, Compress to ZIP file)' 'WARN'
+    }
+}
+
+$sensitivePaths = @(
+    'dev\agent-configs\.codex\auth.json',
+    'dev\dotfiles\.azure\msal_token_cache.bin',
+    'dev\dotfiles\.azure\commands'
+)
+
 Write-Host ''
 Write-Host '=========================================================' -ForegroundColor Cyan
-Write-Host (" Collection finished: {0:N1} MB, {1} warnings, {2} errors" -f ($sum / 1MB), $warns, $errors) -ForegroundColor Cyan
+Write-Host (" Collection finished: {0:N1} MB in {1} files, {2} warnings, {3} errors" -f ($sum / 1MB), $collected.Count, $warns, $errors) -ForegroundColor Cyan
 Write-Host '=========================================================' -ForegroundColor Cyan
+if ($collected.Count -gt 15000) {
+    Write-Host ' Note: this package contains a very large number of small files.' -ForegroundColor Yellow
+    Write-Host ' Cloud drives (OneDrive/SharePoint) can take many hours to sync that many' -ForegroundColor Yellow
+    Write-Host ' files. Prefer a USB drive, or re-run with -Archive to get a single .zip.' -ForegroundColor Yellow
+}
+foreach ($rel in $sensitivePaths) {
+    if (Test-Path -LiteralPath (Join-Path $OutputPath $rel)) {
+        Write-Host " Contains sign-in tokens: $rel" -ForegroundColor Yellow
+    }
+}
 Write-Host ' Next steps:' -ForegroundColor White
 Write-Host '   1. Let the folder below finish uploading to your cloud drive (or copy it to a USB drive):' -ForegroundColor Gray
 Write-Host "      $OutputPath" -ForegroundColor White
@@ -423,4 +480,5 @@ Write-Host '   2. On the NEW laptop, run the verifier first:' -ForegroundColor G
 Write-Host '      .\Verify-Package.ps1 -PackagePath "<the copied package folder>"' -ForegroundColor White
 Write-Host '   3. Then review and run the restore:' -ForegroundColor Gray
 Write-Host '      .\Restore-NewLaptop.ps1 -PackagePath "<the copied package folder>"' -ForegroundColor White
+Write-Host '   Keep this package private and delete it once the migration is done.' -ForegroundColor Gray
 Write-Host ''

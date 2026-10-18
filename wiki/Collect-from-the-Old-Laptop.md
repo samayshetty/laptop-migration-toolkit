@@ -10,7 +10,9 @@
 ```
 
 Run it in an **Administrator** PowerShell so Wi-Fi passwords and the power
-scheme are included.
+scheme are included. You can run it as a standard user as well - everything else
+is collected, only Wi-Fi passwords and the power scheme are skipped (see
+[No Administrator Rights](No-Administrator-Rights)).
 
 ## Parameters
 
@@ -22,6 +24,9 @@ scheme are included.
 | `-ExtraFolders "D:\Projects","C:\code"` | Copy additional folders that live outside your user profile. |
 | `-SkipSSH` | Do not collect `~\.ssh`. Use this whenever the package goes to any cloud drive (corporate OneDrive!). |
 | `-SkipApps` | Skip the application inventory (rarely needed). |
+| `-IncludeVscodeHistory` | Also collect VS Code edit history and workspace storage. These are caches and are excluded by default because they add tens of thousands of tiny files to the package. |
+| `-IncludeCursorExtensions` | Also collect installed Cursor extensions (`.cursor\extensions`). Excluded by default. |
+| `-Archive` | Also write the package as a single `.zip` next to the folder (uses `tar.exe`). Much faster to copy to a USB drive or upload to a cloud drive. |
 | `-NonInteractive` | Never prompt (for automation). |
 | `-NoElevate` | Do not offer to relaunch as administrator. |
 

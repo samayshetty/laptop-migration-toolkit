@@ -16,7 +16,8 @@ Built as three PowerShell scripts that work on any Windows 10/11 laptop pair
 ## Quick start
 
 ```powershell
-# On the OLD laptop - run an *Administrator* PowerShell:
+# On the OLD laptop - an Administrator PowerShell is recommended (Wi-Fi passwords),
+# but a standard user works too:
 .\Collect-OldLaptop.ps1 -OutputPath "$env:OneDriveCommercial\MigrationPackage" -InteractiveApps
 
 # On the NEW laptop:
@@ -26,6 +27,10 @@ Built as three PowerShell scripts that work on any Windows 10/11 laptop pair
 
 The restore script shows an editable migration plan. Press `a` to choose per-app
 modes, numbers to toggle items, `s` to run.
+
+No Administrator rights on the new laptop? Everything is restored except the power
+scheme, which the script skips automatically - see
+[No Administrator Rights](wiki/No-Administrator-Rights.md).
 
 ## What gets migrated
 
@@ -65,8 +70,17 @@ package during collection with `-InteractiveApps`):
 
 - Windows 10 1809+ or Windows 11, PowerShell 5.1 (built-in)
 - `winget` (App Installer) for automatic app installation
-- Administrator rights recommended (Wi-Fi passwords, power scheme, fonts)
+- Administrator rights are **optional**: only Wi-Fi passwords (on the old laptop) and
+  the power scheme need them. A standard user can collect and restore everything else
 - Any transfer medium: OneDrive/SharePoint, USB drive, network share
+
+## Package size
+
+The collector skips VS Code caches (`History`, `workspaceStorage`, ...) and installed
+Cursor extensions by default, which keeps packages small. Add `-IncludeVscodeHistory`
+or `-IncludeCursorExtensions` to keep them. If you use a cloud drive, `-Archive`
+additionally writes a single `.zip`, which is much faster to upload than tens of
+thousands of small files. Use a USB drive for the fastest transfer.
 
 ## Documentation
 
