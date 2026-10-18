@@ -37,6 +37,12 @@ Standard-user support and smaller, faster packages.
 - The README and the wiki were restyled: SVG banner, shields.io badges, emoji
   section headings, a consistent navigation bar on every wiki page, colour-coded
   GitHub alerts, collapsible parameters reference and a Mermaid flow diagram.
+- New wiki page **First-Time Setup (absolute beginner)**: how to download the ZIP or
+  clone the repo, where the files land, how to open PowerShell inside the `scripts`
+  folder (three ways), how to open it as Administrator, how to unblock the files, the
+  one-line execution-policy fix, sample good output, a table of first-run errors with
+  exact fixes, a mini PowerShell lesson and a tick-off checklist. `Getting Started` was
+  rewritten as a 6-step overview that links to it.
 
 ## [1.0.0] - 2026-10-17
 

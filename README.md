@@ -69,6 +69,12 @@
 
 Need a dry run first? Add `-VerifyOnly` to the restore - it prints the full plan and changes nothing.
 
+> [!TIP]
+> **Never used GitHub or PowerShell before?** The wiki walks you through every click:
+> download the ZIP, extract it, open PowerShell in the right folder, open it as
+> Administrator, allow the script to run and fix any first-run error.
+> Start at **[First-Time Setup](wiki/First-Time-Setup.md)**.
+
 ```mermaid
 flowchart LR
     A["🖥️ OLD laptop"] -->|"📦 Collect-OldLaptop.ps1"| B[("🗂️ Migration package")]
@@ -259,6 +265,7 @@ The restore detects it automatically, doesn't ask for elevation you can't grant,
 | Page | What's inside |
 | :-- | :-- |
 | 🏠 [Home](wiki/Home.md) | Wiki landing page |
+| 🧑‍🏫 [First-Time Setup](wiki/First-Time-Setup.md) | **Absolute-beginner walkthrough**: download, unzip, open PowerShell, run it, fix first-run errors |
 | 🚀 [Getting Started](wiki/Getting-Started.md) | Requirements &amp; the 5-minute overview |
 | 📦 [Collect from the Old Laptop](wiki/Collect-from-the-Old-Laptop.md) | Every parameter explained |
 | 🔍 [Verify the Package](wiki/Verify-the-Package.md) | Reading the verification report |

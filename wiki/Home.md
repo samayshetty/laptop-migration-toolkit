@@ -12,6 +12,7 @@
 ### 🖥️ ➜ 💻 &nbsp; Your whole Windows setup, from one laptop to the next
 
 <p>
+<a href="First-Time-Setup"><kbd>🧑‍🏫 First-time setup</kbd></a>
 <a href="Getting-Started"><kbd>🚀 Getting started</kbd></a>
 <a href="Collect-from-the-Old-Laptop"><kbd>📦 Collect</kbd></a>
 <a href="Verify-the-Package"><kbd>🔍 Verify</kbd></a>
@@ -40,7 +41,8 @@ flowchart LR
 | ⚡ | **[Restore](Restore-on-the-New-Laptop)** | `Restore-NewLaptop.ps1` | 💻 new |
 
 > [!TIP]
-> Start with **[Getting Started](Getting-Started)** for requirements and the 5-minute overview.
+> **Brand new to this?** Start with **[🧑‍🏫 First-Time Setup](First-Time-Setup)** - it assumes you
+> know nothing and shows every click. Then come back to [Getting Started](Getting-Started).
 
 ---
 
@@ -52,6 +54,7 @@ flowchart LR
 
 **🚀 Start here**
 - [🏠 Home](Home)
+- [🧑‍🏫 First-Time Setup (absolute beginner)](First-Time-Setup)
 - [🚀 Getting Started](Getting-Started)
 - [📦 Collect from the Old Laptop](Collect-from-the-Old-Laptop)
 - [🔍 Verify the Package](Verify-the-Package)

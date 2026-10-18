@@ -2,7 +2,7 @@
 
 <div align="center">
 
-[Home](Home) &#183; [Getting Started](Getting-Started) &#183; [Collect](Collect-from-the-Old-Laptop) &#183; [Verify](Verify-the-Package) &#183; [Restore](Restore-on-the-New-Laptop) &#183; [App Modes](App-Selection-and-Granularity) &#183; [Conflicts](Conflicts-and-Version-Mismatch) &#183; [Security](Security-and-Privacy) &#183; [No Admin](No-Administrator-Rights) &#183; [Troubleshooting](Troubleshooting) &#183; [FAQ](FAQ)
+[Home](Home) &#183; [Setup](First-Time-Setup) &#183; [Getting Started](Getting-Started) &#183; [Collect](Collect-from-the-Old-Laptop) &#183; [Verify](Verify-the-Package) &#183; [Restore](Restore-on-the-New-Laptop) &#183; [App Modes](App-Selection-and-Granularity) &#183; [Conflicts](Conflicts-and-Version-Mismatch) &#183; [Security](Security-and-Privacy) &#183; [No Admin](No-Administrator-Rights) &#183; [Troubleshooting](Troubleshooting) &#183; [FAQ](FAQ)
 
 </div>
 
@@ -16,6 +16,10 @@
 ```powershell
 .\Collect-OldLaptop.ps1 -OutputPath "$env:OneDriveCommercial\MigrationPackage" -InteractiveApps
 ```
+
+> [!TIP]
+> **First time running a PowerShell script?** [🧑‍🏫 First-Time Setup](First-Time-Setup) shows the
+> exact clicks: download, unzip, open PowerShell in this folder, run the command, fix errors.
 
 Run it in an **Administrator** PowerShell so Wi-Fi passwords and the power
 scheme are included. You can run it as a standard user as well - everything else
