@@ -13,7 +13,7 @@ param(
     [switch]$NoElevate
 )
 
-$ToolkitVersion = '1.0.1'
+$ToolkitVersion = '1.1.0'
 $PackageFormat = 2
 $ErrorActionPreference = 'Continue'
 $ProgressPreference = 'SilentlyContinue'

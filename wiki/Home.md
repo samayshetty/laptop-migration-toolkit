@@ -4,7 +4,7 @@
 
 <br>
 
-[![Version](https://img.shields.io/badge/version-1.0.1-6366f1?style=for-the-badge&labelColor=111827)](https://github.com/samayshetty/laptop-migration-toolkit/releases)
+[![Version](https://img.shields.io/badge/version-1.1.0-6366f1?style=for-the-badge&labelColor=111827)](https://github.com/samayshetty/laptop-migration-toolkit/releases)
 [![MIT](https://img.shields.io/badge/license-MIT-22c55e?style=for-the-badge&labelColor=111827)](https://github.com/samayshetty/laptop-migration-toolkit/blob/main/LICENSE)
 [![PowerShell](https://img.shields.io/badge/PowerShell-5.1-5391FE?style=for-the-badge&labelColor=111827&logo=powershell&logoColor=white)](https://github.com/samayshetty/laptop-migration-toolkit)
 [![Repo](https://img.shields.io/badge/repo-laptop--migration--toolkit-0ea5e9?style=for-the-badge&labelColor=111827&logo=github)](https://github.com/samayshetty/laptop-migration-toolkit)
@@ -14,6 +14,7 @@
 <p>
 <a href="First-Time-Setup"><kbd>🧑‍🏫 First-time setup</kbd></a>
 <a href="Getting-Started"><kbd>🚀 Getting started</kbd></a>
+<a href="Using-the-GUI"><kbd>🖼️ GUI</kbd></a>
 <a href="Collect-from-the-Old-Laptop"><kbd>📦 Collect</kbd></a>
 <a href="Verify-the-Package"><kbd>🔍 Verify</kbd></a>
 <a href="Restore-on-the-New-Laptop"><kbd>⚡ Restore</kbd></a>
@@ -43,6 +44,8 @@ flowchart LR
 > [!TIP]
 > **Brand new to this?** Start with **[🧑‍🏫 First-Time Setup](First-Time-Setup)** - it assumes you
 > know nothing and shows every click. Then come back to [Getting Started](Getting-Started).
+>
+> **Prefer a window to typing?** Run `.\Start-MigrationGui.ps1` - see [🖼️ Using the GUI](Using-the-GUI).
 
 ---
 
@@ -55,6 +58,7 @@ flowchart LR
 **🚀 Start here**
 - [🏠 Home](Home)
 - [🧑‍🏫 First-Time Setup (absolute beginner)](First-Time-Setup)
+- [🖼️ Using the GUI](Using-the-GUI)
 - [🚀 Getting Started](Getting-Started)
 - [📦 Collect from the Old Laptop](Collect-from-the-Old-Laptop)
 - [🔍 Verify the Package](Verify-the-Package)

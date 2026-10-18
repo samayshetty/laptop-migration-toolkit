@@ -2,7 +2,7 @@
 
 <div align="center">
 
-[Home](Home) &#183; [Setup](First-Time-Setup) &#183; [Getting Started](Getting-Started) &#183; [Collect](Collect-from-the-Old-Laptop) &#183; [Verify](Verify-the-Package) &#183; [Restore](Restore-on-the-New-Laptop) &#183; [App Modes](App-Selection-and-Granularity) &#183; [Conflicts](Conflicts-and-Version-Mismatch) &#183; [Security](Security-and-Privacy) &#183; [No Admin](No-Administrator-Rights) &#183; [Troubleshooting](Troubleshooting) &#183; [FAQ](FAQ)
+[Home](Home) &#183; [Setup](First-Time-Setup) &#183; [GUI](Using-the-GUI) &#183; [Getting Started](Getting-Started) &#183; [Collect](Collect-from-the-Old-Laptop) &#183; [Verify](Verify-the-Package) &#183; [Restore](Restore-on-the-New-Laptop) &#183; [App Modes](App-Selection-and-Granularity) &#183; [Conflicts](Conflicts-and-Version-Mismatch) &#183; [Security](Security-and-Privacy) &#183; [No Admin](No-Administrator-Rights) &#183; [Troubleshooting](Troubleshooting) &#183; [FAQ](FAQ)
 
 </div>
 
@@ -43,6 +43,11 @@ flowchart TD
 | 4 | 🔁 | Let OneDrive finish syncing, or copy the folder to USB | [Collect](Collect-from-the-Old-Laptop) |
 | 5 | 💻 new | `.\Verify-Package.ps1 -PackagePath "<package folder>"` | [Verify](Verify-the-Package) |
 | 6 | 💻 new | `.\Restore-NewLaptop.ps1 -PackagePath "<package folder>"` | [Restore](Restore-on-the-New-Laptop) |
+
+> [!TIP]
+> **Prefer clicking to typing?** Run `.\Start-MigrationGui.ps1` and pick Collect / Verify /
+> Restore in a window - see [🖼️ Using the GUI](Using-the-GUI). The commands below are exactly
+> what that window runs.
 
 ## ⌨️ Copy-paste version
 

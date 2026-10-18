@@ -2,6 +2,33 @@
 
 All notable changes to this project are documented in this file.
 
+## [1.1.0] - 2026-10-18
+
+A window on top of the same toolkit - plus even friendlier documentation.
+
+### Added
+
+- `Start-MigrationGui.ps1`: an optional Windows Forms window (no install, no admin
+  rights, nothing outside what ships with Windows) with
+  - a task picker: Collect / Verify / Restore
+  - folder field with `Browse...`, `Use default` and `Open scripts folder`
+  - the relevant switches as checkboxes per task
+  - a live, colour-coded log (green OK, amber warning, red error) streamed from the
+    real script, a status line, elapsed time and a marquee progress bar
+  - `Run` / `Stop`, `Package folder` / `Backups` openers, `Save log` / `Copy log`
+  - a header that shows whether you are running as Administrator
+  - the two genuinely interactive options (the app picker and the plan editor) open a
+    normal console window, since they need typing
+  - it runs the existing scripts unchanged via a generated helper that reports every
+    output stream back into the window
+- Wiki page **Using the GUI**, linked from Home, Getting Started and First-Time Setup.
+
+### Changed
+
+- All scripts bumped to `1.1.0`.
+- README: GUI row in the scripts table, a "not a terminal person?" tip in Quick start,
+  and the wiki table now lists Using the GUI.
+
 ## [1.0.1] - 2026-10-18
 
 Standard-user support and smaller, faster packages.

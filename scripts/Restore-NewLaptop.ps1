@@ -14,7 +14,7 @@ param(
     [switch]$SkipUserFiles
 )
 
-$ToolkitVersion = '1.0.1'
+$ToolkitVersion = '1.1.0'
 $ErrorActionPreference = 'Continue'
 $ProgressPreference = 'SilentlyContinue'
 

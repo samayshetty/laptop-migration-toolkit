@@ -4,7 +4,7 @@
 
 <br><br>
 
-[![Version](https://img.shields.io/badge/version-1.0.1-6366f1?style=for-the-badge&labelColor=111827)](https://github.com/samayshetty/laptop-migration-toolkit/releases)
+[![Version](https://img.shields.io/badge/version-1.1.0-6366f1?style=for-the-badge&labelColor=111827)](https://github.com/samayshetty/laptop-migration-toolkit/releases)
 [![License](https://img.shields.io/badge/license-MIT-22c55e?style=for-the-badge&labelColor=111827)](LICENSE)
 [![Platform](https://img.shields.io/badge/platform-Windows%2010%20%7C%2011-0078d4?style=for-the-badge&labelColor=111827&logo=windows&logoColor=white)](#-requirements)
 [![PowerShell](https://img.shields.io/badge/PowerShell-5.1-5391FE?style=for-the-badge&labelColor=111827&logo=powershell&logoColor=white)](#-requirements)
@@ -45,6 +45,10 @@
 ---
 
 ## 🚀 Quick start
+
+> [!TIP]
+> **Prefer a window?** `.\Start-MigrationGui.ps1` does all three steps with clickable
+> options and a live log - see **[Using the GUI](wiki/Using-the-GUI.md)**.
 
 > [!IMPORTANT]
 > Collect on the **old** laptop, verify then restore on the **new** one.
@@ -90,8 +94,25 @@ flowchart LR
 | 1 | `scripts/Collect-OldLaptop.ps1` | 🖥️ old | 📦 |
 | 2 | `scripts/Verify-Package.ps1` | 💻 new | 🔍 |
 | 3 | `scripts/Restore-NewLaptop.ps1` | 💻 new | ⚡ |
+| ☝️ | `scripts/Start-MigrationGui.ps1` | either | 🖼️ |
 
 </div>
+
+> [!TIP]
+> Not a terminal person? **`Start-MigrationGui.ps1`** puts all three steps in a window:
+> pick the task, pick the folder, tick options, press **Run**, watch the colour-coded log.
+> No install and no admin rights - see **[Using the GUI](wiki/Using-the-GUI.md)**.
+
+---
+
+## 🧩 The scripts
+
+| Script | Run it on | What it does |
+| --- | --- | --- |
+| `scripts/Start-MigrationGui.ps1` | either laptop | Optional window that runs the other three for you |
+| `scripts/Collect-OldLaptop.ps1` | 🖥️ old laptop | Collects everything into one portable "migration package" |
+| `scripts/Verify-Package.ps1` | 💻 new laptop | Read-only review of the package before you restore |
+| `scripts/Restore-NewLaptop.ps1` | 💻 new laptop | Interactive plan editor + restore engine |
 
 ---
 
@@ -266,6 +287,7 @@ The restore detects it automatically, doesn't ask for elevation you can't grant,
 | :-- | :-- |
 | 🏠 [Home](wiki/Home.md) | Wiki landing page |
 | 🧑‍🏫 [First-Time Setup](wiki/First-Time-Setup.md) | **Absolute-beginner walkthrough**: download, unzip, open PowerShell, run it, fix first-run errors |
+| 🖼️ [Using the GUI](wiki/Using-the-GUI.md) | The optional window: tasks, options, live log, tips |
 | 🚀 [Getting Started](wiki/Getting-Started.md) | Requirements &amp; the 5-minute overview |
 | 📦 [Collect from the Old Laptop](wiki/Collect-from-the-Old-Laptop.md) | Every parameter explained |
 | 🔍 [Verify the Package](wiki/Verify-the-Package.md) | Reading the verification report |
@@ -282,7 +304,7 @@ The restore detects it automatically, doesn't ask for elevation you can't grant,
 ## 🗂️ Repository layout
 
 ```text
-scripts/   Collect-OldLaptop.ps1 | Verify-Package.ps1 | Restore-NewLaptop.ps1
+scripts/   Start-MigrationGui.ps1 | Collect-OldLaptop.ps1 | Verify-Package.ps1 | Restore-NewLaptop.ps1
 wiki/      full documentation (start at Home)
 assets/    banner artwork
 docs/      helper to publish the wiki

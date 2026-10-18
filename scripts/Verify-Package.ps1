@@ -3,7 +3,7 @@ param(
     [Parameter(Mandatory = $true)][string]$PackagePath
 )
 
-$ToolkitVersion = '1.0.1'
+$ToolkitVersion = '1.1.0'
 $ErrorActionPreference = 'Continue'
 $script:Findings = New-Object System.Collections.Generic.List[string]
 $script:ProblemCount = 0
