@@ -13,7 +13,7 @@ param(
     [switch]$NoElevate
 )
 
-$ToolkitVersion = '1.1.0'
+$ToolkitVersion = '1.2.0'
 $PackageFormat = 2
 $ErrorActionPreference = 'Continue'
 $ProgressPreference = 'SilentlyContinue'
@@ -166,6 +166,15 @@ if (-not $OutputPath) {
 }
 $OutputPath = [IO.Path]::GetFullPath($OutputPath)
 if ($ExtraFolders.Count -eq 1 -and $ExtraFolders[0] -like '*,*') { $ExtraFolders = $ExtraFolders[0] -split ',' }
+. (Join-Path $PSScriptRoot 'MigrationCommon.ps1')
+$script:ZipTarget = $null
+if ($Archive) {
+    # Build on the local disk; only the single zip (+ checksum) goes to the cloud folder.
+    $script:ZipTarget = $OutputPath.TrimEnd('\') + '.zip'
+    EnsureDir (Split-Path -Parent $script:ZipTarget) | Out-Null
+    $OutputPath = Join-Path $env:LOCALAPPDATA ('laptop-migration-toolkit\staging\' + (Split-Path -Leaf $OutputPath))
+    Remove-Item -LiteralPath $OutputPath -Recurse -Force -ErrorAction SilentlyContinue
+}
 EnsureDir $OutputPath | Out-Null
 Log "Package folder: $OutputPath"
 
@@ -437,16 +446,20 @@ $errors = @($script:Findings | Where-Object { $_ -match '\] ERROR' }).Count
 $warns = @($script:Findings | Where-Object { $_ -match '\] WARN' }).Count
 
 if ($Archive) {
-    $zipPath = $OutputPath.TrimEnd('\') + '.zip'
+    $zipPath = $script:ZipTarget
     $parent = Split-Path -Parent $OutputPath
     $leaf = Split-Path -Leaf $OutputPath
     if (Get-Command tar -ErrorAction SilentlyContinue) {
         Log 'Creating a single-file archive (much faster to move or sync than many small files)...' 'STEP'
+        Remove-Item -LiteralPath $zipPath, ($zipPath + '.json') -Force -ErrorAction SilentlyContinue
         & tar -a -cf $zipPath -C $parent $leaf 2>&1 | Out-Null
         if ((Test-Path -LiteralPath $zipPath) -and $LASTEXITCODE -le 1) {
+            Write-PackageSidecar -Zip $zipPath
             Log ("Archive created: {0} ({1:N1} MB)" -f $zipPath, ((Get-Item -LiteralPath $zipPath).Length / 1MB)) 'OK'
+            Remove-Item -LiteralPath $OutputPath -Recurse -Force -ErrorAction SilentlyContinue
+            $OutputPath = $zipPath
         } else {
-            Log 'Archive creation failed - the package folder itself is complete and usable' 'WARN'
+            Log "Archive creation failed - the package folder is complete and usable at $OutputPath" 'WARN'
         }
     } else {
         Log 'tar.exe not found - cannot create the archive (use 7-Zip, or Explorer: right-click the folder, Compress to ZIP file)' 'WARN'
@@ -463,7 +476,7 @@ Write-Host ''
 Write-Host '=========================================================' -ForegroundColor Cyan
 Write-Host (" Collection finished: {0:N1} MB in {1} files, {2} warnings, {3} errors" -f ($sum / 1MB), $collected.Count, $warns, $errors) -ForegroundColor Cyan
 Write-Host '=========================================================' -ForegroundColor Cyan
-if ($collected.Count -gt 15000) {
+if ($collected.Count -gt 15000 -and -not $script:ZipTarget) {
     Write-Host ' Note: this package contains a very large number of small files.' -ForegroundColor Yellow
     Write-Host ' Cloud drives (OneDrive/SharePoint) can take many hours to sync that many' -ForegroundColor Yellow
     Write-Host ' files. Prefer a USB drive, or re-run with -Archive to get a single .zip.' -ForegroundColor Yellow

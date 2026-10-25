@@ -4,7 +4,7 @@
 
 <br><br>
 
-[![Version](https://img.shields.io/badge/version-1.1.0-6366f1?style=for-the-badge&labelColor=111827)](https://github.com/samayshetty/laptop-migration-toolkit/releases)
+[![Version](https://img.shields.io/badge/version-1.2.0-6366f1?style=for-the-badge&labelColor=111827)](https://github.com/samayshetty/laptop-migration-toolkit/releases)
 [![License](https://img.shields.io/badge/license-MIT-22c55e?style=for-the-badge&labelColor=111827)](LICENSE)
 [![Platform](https://img.shields.io/badge/platform-Windows%2010%20%7C%2011-0078d4?style=for-the-badge&labelColor=111827&logo=windows&logoColor=white)](#-requirements)
 [![PowerShell](https://img.shields.io/badge/PowerShell-5.1-5391FE?style=for-the-badge&labelColor=111827&logo=powershell&logoColor=white)](#-requirements)

@@ -14,7 +14,7 @@ param(
     [switch]$SkipUserFiles
 )
 
-$ToolkitVersion = '1.1.0'
+$ToolkitVersion = '1.2.0'
 $ErrorActionPreference = 'Continue'
 $ProgressPreference = 'SilentlyContinue'
 
@@ -499,9 +499,12 @@ function Invoke-Bundle {
                     if ($exts.Count -eq 0) {
                         Log 'No VS Code extensions listed in the package' 'OK'
                     } else {
+                        Set-NodeCaFromWindows
                         Log "Installing $($exts.Count) VS Code extensions..." 'STEP'
-                        foreach ($ext in $exts) { $null = & $codeCli --install-extension $ext.Trim() --force 2>&1 }
-                        Log 'VS Code extensions installed' 'OK'
+                        $bad = @()
+                        foreach ($ext in $exts) { if ((Install-VsCodeExtension -Cli $codeCli -Id $ext.Trim()) -ne 'ok') { $bad += $ext.Trim() } }
+                        if ($bad.Count -eq 0) { Log 'VS Code extensions installed' 'OK' }
+                        else { Log ("{0} of {1} extensions not installed (install from the Extensions panel): {2}" -f $bad.Count, $exts.Count, ($bad -join ', ')) 'WARN' }
                     }
                 } else {
                     Log 'VS Code CLI not found - install VS Code, then re-run this restore to add extensions' 'WARN'
@@ -745,6 +748,9 @@ if (-not $isAdmin) {
     else { Log 'Standard user account (no Administrator rights) - Administrator-only steps will be skipped; everything else is restored normally' 'WARN' }
 }
 
+. (Join-Path $PSScriptRoot 'MigrationCommon.ps1')
+try { $PackagePath = Resolve-MigrationPackage -Path $PackagePath -Log { param($m, $l) Log $m $(if ($l) { $l } else { 'INFO' }) } }
+catch { Log $_.Exception.Message 'ERROR'; throw }
 $script:PackagePath = [IO.Path]::GetFullPath($PackagePath)
 $infoFile = Join-Path $script:PackagePath 'system-info.json'
 if (-not (Test-Path -LiteralPath $infoFile)) {

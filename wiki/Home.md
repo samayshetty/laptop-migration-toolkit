@@ -4,7 +4,7 @@
 
 <br>
 
-[![Version](https://img.shields.io/badge/version-1.1.0-6366f1?style=for-the-badge&labelColor=111827)](https://github.com/samayshetty/laptop-migration-toolkit/releases)
+[![Version](https://img.shields.io/badge/version-1.2.0-6366f1?style=for-the-badge&labelColor=111827)](https://github.com/samayshetty/laptop-migration-toolkit/releases)
 [![MIT](https://img.shields.io/badge/license-MIT-22c55e?style=for-the-badge&labelColor=111827)](https://github.com/samayshetty/laptop-migration-toolkit/blob/main/LICENSE)
 [![PowerShell](https://img.shields.io/badge/PowerShell-5.1-5391FE?style=for-the-badge&labelColor=111827&logo=powershell&logoColor=white)](https://github.com/samayshetty/laptop-migration-toolkit)
 [![Repo](https://img.shields.io/badge/repo-laptop--migration--toolkit-0ea5e9?style=for-the-badge&labelColor=111827&logo=github)](https://github.com/samayshetty/laptop-migration-toolkit)
@@ -18,6 +18,7 @@
 <a href="Collect-from-the-Old-Laptop"><kbd>📦 Collect</kbd></a>
 <a href="Verify-the-Package"><kbd>🔍 Verify</kbd></a>
 <a href="Restore-on-the-New-Laptop"><kbd>⚡ Restore</kbd></a>
+<a href="Delta-Sync"><kbd>🔁 Delta sync</kbd></a>
 <a href="No-Administrator-Rights"><kbd>🔓 No admin?</kbd></a>
 <a href="Troubleshooting"><kbd>🧰 Troubleshooting</kbd></a>
 </p>
@@ -40,6 +41,7 @@ flowchart LR
 | 📦 | **[Collect](Collect-from-the-Old-Laptop)** | `Collect-OldLaptop.ps1` | 🖥️ old |
 | 🔍 | **[Verify](Verify-the-Package)** | `Verify-Package.ps1` | 💻 new |
 | ⚡ | **[Restore](Restore-on-the-New-Laptop)** | `Restore-NewLaptop.ps1` | 💻 new |
+| 🔁 | **[Delta Sync](Delta-Sync)** *(optional, repeatable)* | `Sync-Delta.ps1` | 🖥️ old ➜ 💻 new |
 
 > [!TIP]
 > **Brand new to this?** Start with **[🧑‍🏫 First-Time Setup](First-Time-Setup)** - it assumes you
@@ -58,6 +60,7 @@ flowchart LR
 **🚀 Start here**
 - [🏠 Home](Home)
 - [🧑‍🏫 First-Time Setup (absolute beginner)](First-Time-Setup)
+- [🔁 Delta Sync](Delta-Sync)
 - [🖼️ Using the GUI](Using-the-GUI)
 - [🚀 Getting Started](Getting-Started)
 - [📦 Collect from the Old Laptop](Collect-from-the-Old-Laptop)

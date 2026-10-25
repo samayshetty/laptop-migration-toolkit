@@ -33,7 +33,7 @@ Open each file in `wiki/` (view the raw content), create a wiki page with the
 same name in the GitHub UI, and paste the content:
 
 Home, First-Time-Setup, Using-the-GUI, Getting-Started, Collect-from-the-Old-Laptop,
-Verify-the-Package, Restore-on-the-New-Laptop, App-Selection-and-Granularity,
+Verify-the-Package, Restore-on-the-New-Laptop, Delta-Sync, App-Selection-and-Granularity,
 Conflicts-and-Version-Mismatch, Security-and-Privacy, No-Administrator-Rights,
 Troubleshooting, FAQ.
 

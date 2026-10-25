@@ -3,7 +3,7 @@ param(
     [Parameter(Mandatory = $true)][string]$PackagePath
 )
 
-$ToolkitVersion = '1.1.0'
+$ToolkitVersion = '1.2.0'
 $ErrorActionPreference = 'Continue'
 $script:Findings = New-Object System.Collections.Generic.List[string]
 $script:ProblemCount = 0
@@ -58,6 +58,9 @@ Write-Host (' laptop-migration-toolkit v' + $ToolkitVersion) -ForegroundColor Cy
 Write-Host ' VERIFY PACKAGE - read-only review of the collected data ' -ForegroundColor Cyan
 Write-Host '=========================================================' -ForegroundColor Cyan
 
+. (Join-Path $PSScriptRoot 'MigrationCommon.ps1')
+try { $PackagePath = Resolve-MigrationPackage -Path $PackagePath -Log { param($m, $l) Log $m $(if ($l -in 'OK', 'WARN', 'ERROR', 'STEP') { $l } else { 'INFO' }) } }
+catch { Log $_.Exception.Message 'ERROR'; exit 1 }
 $Pkg = [IO.Path]::GetFullPath($PackagePath)
 if (-not (Test-Path -LiteralPath $Pkg)) {
     Log "Package folder not found: $Pkg" 'ERROR'

@@ -61,7 +61,7 @@ In File Explorer, go into the `scripts` folder, **right-click `Start-MigrationGu
 
 | Area | What it is |
 | :-- | :-- |
-| **1. What do you want to do?** | Pick **Collect**, **Verify** or **Restore** |
+| **1. What do you want to do?** | Pick **Collect**, **Verify**, **Restore**, **Delta: collect**, **Delta: apply** or **Fix missing per-folder VS Code chats** |
 | **2. Folder** | Where the package lives (or will be created). `Browse...` picks it, `Use default` suggests OneDrive/Desktop |
 | **3. Options** | The switches that matter for the selected task (see below) |
 | **Log** | Live output, colour-coded: green = OK, amber = warning, red = error |
@@ -75,12 +75,19 @@ In File Explorer, go into the `scripts` folder, **right-click `Start-MigrationGu
 | :-- | :-- | :-- |
 | Choose which apps to carry over | *(nothing - read-only)* | Dry run only (show the plan, change nothing) |
 | Also copy Desktop, Documents, Downloads... | | Open the interactive plan editor in a console window |
-| Also write a single `.zip` next to the folder | | Do not install applications |
+| Pack into a single `.zip` - recommended for OneDrive *(on)* | | Do not install applications |
 | Do not collect SSH keys | | Skip visuals, theme, taskbar and wallpaper |
 | Keep the VS Code edit history (larger) | | Skip Wi-Fi profiles |
 | Keep installed Cursor extensions (larger) | | Skip user fonts |
 | Skip the application inventory | | Skip environment variables / SSH keys / personal folders |
 | | | Do not restart Explorer at the end |
+
+| Delta: collect | Delta: apply | Fix per-folder chats |
+| :-- | :-- | :-- |
+| Changed since (blank = automatic) | Close VS Code, Notepad++, OneNote and browsers first *(on)* | Apply *(on; untick for a preview)* |
+| Also include changed Desktop / Documents / Pictures | Do not install missing VS Code extensions | |
+
+See [Delta Sync](Delta-Sync) for what the delta tasks do.
 
 ---
 
@@ -104,12 +111,12 @@ runs quietly inside the window with a live log.
 
 ## ✅ A typical run
 
-1. **Old laptop:** task = *Collect*, folder = `...\MigrationPackage`, options = your choice, **Run**.
+1. **Old laptop:** task = *Collect*, folder = `...\MigrationPackage`, keep **Pack into a single .zip** ticked, **Run**.
 2. Wait for the line **`Collection finished: ... 0 errors`** in the log.
-3. Let OneDrive finish syncing (or copy the folder to a USB stick).
-4. **New laptop:** task = *Verify*, folder = the package, **Run** - read the report in the log.
-5. Task = *Restore*, folder = the package, **Run** - tick *Dry run only* first if you want a preview.
-6. Sign out or reboot when it finishes. Use **Backups** to see what was changed.
+3. **New laptop:** task = *Verify*, same folder, **Run** - it waits for OneDrive to deliver the zip, then shows the report.
+4. Task = *Restore*, folder = the package, **Run** - tick *Dry run only* first if you want a preview.
+5. Sign out or reboot when it finishes. Use **Backups** to see what was changed.
+6. Still using the old laptop for a while? Repeat **Delta: collect** (old) / **Delta: apply** (new) as often as you like.
 
 `0 errors` is the number that matters - warnings are normal and explained in the log.
 

@@ -2,6 +2,41 @@
 
 All notable changes to this project are documented in this file.
 
+## [1.2.0] - 2026-10-25
+
+One-touch OneDrive transfers, delta sync, and fixes found during a real migration.
+
+### Added
+
+- `Sync-Delta.ps1` + GUI tasks **Delta: collect** / **Delta: apply**: carry over only what
+  changed on the old laptop since the last sync, as one zip. Covers VS Code and VS Code
+  Insiders (incl. Copilot chats and custom agents/prompts), Windows Notepad, Notepad++,
+  OneNote options, all Chrome/Edge profiles, agent configs and dotfiles. Apply writes a file
+  only when the old laptop's copy is newer, backs up everything it overwrites and skips a zip
+  that was already applied. See wiki **Delta Sync**.
+- `Repair-WorkspaceChats.ps1` + GUI task **Fix missing per-folder VS Code chats**: VS Code keys
+  per-window chat history by folder path *and creation time*, so restored chats did not show
+  in re-created folders. The script relinks them (backup first, preview by default).
+- `MigrationCommon.ps1`: shared helpers (zip checksum sidecar, OneDrive wait, local extract,
+  Windows CA bundle for the VS Code CLI, extension install with timeout).
+
+### Changed
+
+- `-Archive` now builds the package on the local disk and puts **only** `MigrationPackage.zip`
+  plus a `.zip.json` checksum into the output location (no 40 000-file OneDrive upload). The
+  GUI ticks it by default.
+- Verify and Restore accept a zipped package (`-PackagePath` = the zip, or the folder name
+  next to which the zip lives). They **wait for OneDrive** to deliver the whole file, verify
+  its SHA-256 and extract it to `%LOCALAPPDATA%\laptop-migration-toolkit\package`.
+- VS Code extensions are installed with the Windows certificate store handed to the CLI
+  (fixes `unable to get local issuer certificate` behind TLS-inspecting proxies), with a
+  per-extension timeout, and failures are now listed instead of reported as success.
+
+### Fixed
+
+- GUI: the title was clipped; the live log could crash a run with "file is being used by
+  another process" because log reads locked the file.
+
 ## [1.1.0] - 2026-10-18
 
 A window on top of the same toolkit - plus even friendlier documentation.

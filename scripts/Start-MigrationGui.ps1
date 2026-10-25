@@ -1,7 +1,7 @@
 [CmdletBinding()]
 param()
 
-$GuiVersion = '1.1.0'
+$GuiVersion = '1.2.0'
 $ErrorActionPreference = 'Stop'
 
 if (-not [Environment]::UserInteractive) { exit 0 }
@@ -61,7 +61,46 @@ function Get-DefaultPackagePath {
     return (Join-Path $env:USERPROFILE 'MigrationPackage')
 }
 
+function Get-DefaultDeltaPath {
+    $base = if ($env:OneDriveCommercial) { $env:OneDriveCommercial } elseif ($env:OneDrive) { $env:OneDrive } else { [Environment]::GetFolderPath('Desktop') }
+    return (Join-Path $base 'MigrationDelta')
+}
+
 $script:ModeDefs = [ordered]@{
+    'deltacollect' = @{
+        Script    = 'Sync-Delta.ps1'
+        PathLabel = 'Where to write the delta zip (one file):'
+        PathArg   = '-Path'
+        Browse    = 'Choose where to write the delta zip'
+        Note      = 'Only files changed since the last sync are packed (VS Code, Insiders, Notepad, Notepad++, OneNote, agent configs).'
+        Fixed     = @('-Mode', 'Collect')
+        Since     = $true
+        Options   = @(
+            @{ Id = 'IncludeUserFiles'; Text = 'Also include changed Desktop / Documents / Pictures' }
+        )
+    }
+    'deltaapply' = @{
+        Script    = 'Sync-Delta.ps1'
+        PathLabel = 'Folder holding delta-*.zip (newest is used):'
+        PathArg   = '-Path'
+        Browse    = 'Choose the folder with the delta zip'
+        Note      = 'Only newer files are written; overwritten files are backed up to the Desktop.'
+        Fixed     = @('-Mode', 'Apply')
+        Options   = @(
+            @{ Id = 'CloseApps';      Text = 'Close VS Code, Notepad++, OneNote and browsers first'; Default = $true }
+            @{ Id = 'SkipExtensions'; Text = 'Do not install missing VS Code extensions' }
+        )
+    }
+    'repairchats' = @{
+        Script    = 'Repair-WorkspaceChats.ps1'
+        PathLabel = 'No folder needed for this step.'
+        NoPath    = $true
+        Browse    = ''
+        Note      = 'Open each project folder once in VS Code on this laptop, CLOSE VS Code, then run this.'
+        Options   = @(
+            @{ Id = 'Apply'; Text = 'Apply (untick for a read-only preview)'; Default = $true }
+        )
+    }
     'collect' = @{
         Script            = 'Collect-OldLaptop.ps1'
         PathLabel         = 'Where to create the migration package:'
@@ -71,7 +110,7 @@ $script:ModeDefs = [ordered]@{
         Options           = @(
             @{ Id = 'InteractiveApps';        Text = 'Choose which apps to carry over (opens a console window)' }
             @{ Id = 'IncludeUserFiles';       Text = 'Also copy Desktop, Documents, Downloads, Pictures...' }
-            @{ Id = 'Archive';                Text = 'Also write a single .zip next to the folder' }
+            @{ Id = 'Archive';                Text = 'Pack into a single .zip (recommended for OneDrive)'; Default = $true }
             @{ Id = 'SkipSSH';                Text = 'Do not collect SSH keys' }
             @{ Id = 'IncludeVscodeHistory';   Text = 'Keep the VS Code edit history (larger package)' }
             @{ Id = 'IncludeCursorExtensions'; Text = 'Keep installed Cursor extensions (larger package)' }
@@ -110,8 +149,19 @@ $script:ModeDefs = [ordered]@{
 $script:RunnerTemplate = @'
 param([string]$Target, [string]$Log, [string]$ArgsFile)
 $utf8 = New-Object System.Text.UTF8Encoding($false)
+# The GUI polls this log, so open it shared and retry briefly instead of failing on a transient lock.
+function Write-LogLine([string]$Text) {
+    $bytes = $utf8.GetBytes($Text + "`r`n")
+    for ($i = 0; $i -lt 20; $i++) {
+        try {
+            $fs = [System.IO.File]::Open($Log, 'Append', 'Write', 'ReadWrite, Delete')
+            try { $fs.Write($bytes, 0, $bytes.Length) } finally { $fs.Dispose() }
+            return
+        } catch [System.IO.IOException] { Start-Sleep -Milliseconds 50 }
+    }
+}
 trap {
-    [System.IO.File]::AppendAllText($Log, 'RUNNER ERROR: ' + $_.Exception.Message + "`r`n", $utf8)
+    Write-LogLine ('RUNNER ERROR: ' + $_.Exception.Message)
     exit 1
 }
 $tokens = @(Get-Content -LiteralPath $ArgsFile -Encoding UTF8)
@@ -134,7 +184,7 @@ while ($index -lt $tokens.Count) {
     if ($_ -is [System.Management.Automation.InformationRecord]) { $line = [string]$_.MessageData }
     elseif ($_ -is [System.Management.Automation.ErrorRecord]) { $line = 'ERROR: ' + $_.ToString() }
     else { $line = [string]$_ }
-    [System.IO.File]::AppendAllText($Log, $line + "`r`n", $utf8)
+    Write-LogLine $line
 }
 '@
 
@@ -143,7 +193,7 @@ function New-Label {
     $label = New-Object System.Windows.Forms.Label
     $label.Text = $Text
     $label.Location = New-Object System.Drawing.Point($X, $Y)
-    $label.Size = New-Object System.Drawing.Size($W, 20)
+    $label.Size = New-Object System.Drawing.Size($W, [int]($Size * 2 + 6))
     $label.ForeColor = $Color
     $style = [System.Drawing.FontStyle]::Regular
     if ($Bold) { $style = [System.Drawing.FontStyle]::Bold }
@@ -182,15 +232,15 @@ $header.Height = 78
 $header.BackColor = $colPanel
 $form.Controls.Add($header)
 
-$titleLabel = New-Label -Text 'laptop-migration-toolkit' -X 20 -Y 12 -W 500 -Color $colAccent -Size 17 -Bold $true
+$titleLabel = New-Label -Text 'laptop-migration-toolkit' -X 20 -Y 6 -W 500 -Color $colAccent -Size 17 -Bold $true
 $header.Controls.Add($titleLabel)
-$subLabel = New-Label -Text 'Collect, verify and restore a Windows setup - apps, settings, visuals, dev configs, Wi-Fi, fonts' -X 22 -Y 46 -W 700 -Color $colMuted
+$subLabel = New-Label -Text 'Collect, verify and restore a Windows setup - apps, settings, visuals, dev configs, Wi-Fi, fonts' -X 22 -Y 50 -W 670 -Color $colMuted
 $header.Controls.Add($subLabel)
 
 $adminText = 'Standard user (no admin rights needed)'
 $adminColor = $colWarn
 if (Test-IsAdmin) { $adminText = 'Administrator'; $adminColor = $colOk }
-$adminLabel = New-Label -Text $adminText -X 700 -Y 46 -W 320 -Color $adminColor -Bold $true
+$adminLabel = New-Label -Text $adminText -X 700 -Y 50 -W 320 -Color $adminColor -Bold $true
 $adminLabel.TextAlign = [System.Drawing.ContentAlignment]::MiddleRight
 $header.Controls.Add($adminLabel)
 $versionLabel = New-Label -Text ('v' + $GuiVersion) -X 700 -Y 14 -W 320 -Color $colMuted
@@ -207,7 +257,7 @@ $form.Controls.Add($leftPanel)
 $modeGroup = New-Object System.Windows.Forms.GroupBox
 $modeGroup.Text = ' 1. What do you want to do? '
 $modeGroup.Location = New-Object System.Drawing.Point(12, 8)
-$modeGroup.Size = New-Object System.Drawing.Size(372, 118)
+$modeGroup.Size = New-Object System.Drawing.Size(372, 190)
 $modeGroup.ForeColor = $colAccent
 $leftPanel.Controls.Add($modeGroup)
 
@@ -233,9 +283,30 @@ $radioRestore.Size = New-Object System.Drawing.Size(340, 22)
 $radioRestore.ForeColor = $colText
 $modeGroup.Controls.Add($radioRestore)
 
+$radioDeltaCollect = New-Object System.Windows.Forms.RadioButton
+$radioDeltaCollect.Text = 'Delta: collect changes since last sync (old)'
+$radioDeltaCollect.Location = New-Object System.Drawing.Point(14, 104)
+$radioDeltaCollect.Size = New-Object System.Drawing.Size(340, 22)
+$radioDeltaCollect.ForeColor = $colText
+$modeGroup.Controls.Add($radioDeltaCollect)
+
+$radioDeltaApply = New-Object System.Windows.Forms.RadioButton
+$radioDeltaApply.Text = 'Delta: apply changes (new laptop)'
+$radioDeltaApply.Location = New-Object System.Drawing.Point(14, 130)
+$radioDeltaApply.Size = New-Object System.Drawing.Size(340, 22)
+$radioDeltaApply.ForeColor = $colText
+$modeGroup.Controls.Add($radioDeltaApply)
+
+$radioRepairChats = New-Object System.Windows.Forms.RadioButton
+$radioRepairChats.Text = 'Fix missing per-folder VS Code chats (new)'
+$radioRepairChats.Location = New-Object System.Drawing.Point(14, 156)
+$radioRepairChats.Size = New-Object System.Drawing.Size(340, 22)
+$radioRepairChats.ForeColor = $colText
+$modeGroup.Controls.Add($radioRepairChats)
+
 $pathGroup = New-Object System.Windows.Forms.GroupBox
 $pathGroup.Text = ' 2. Folder '
-$pathGroup.Location = New-Object System.Drawing.Point(12, 134)
+$pathGroup.Location = New-Object System.Drawing.Point(12, 206)
 $pathGroup.Size = New-Object System.Drawing.Size(372, 112)
 $pathGroup.ForeColor = $colPink
 $leftPanel.Controls.Add($pathGroup)
@@ -262,14 +333,14 @@ $pathGroup.Controls.Add($autoButton)
 
 $optGroup = New-Object System.Windows.Forms.GroupBox
 $optGroup.Text = ' 3. Options '
-$optGroup.Location = New-Object System.Drawing.Point(12, 254)
-$optGroup.Size = New-Object System.Drawing.Size(372, 322)
+$optGroup.Location = New-Object System.Drawing.Point(12, 326)
+$optGroup.Size = New-Object System.Drawing.Size(372, 250)
 $optGroup.ForeColor = $colOk
 $leftPanel.Controls.Add($optGroup)
 
 $optPanel = New-Object System.Windows.Forms.FlowLayoutPanel
 $optPanel.Location = New-Object System.Drawing.Point(10, 22)
-$optPanel.Size = New-Object System.Drawing.Size(352, 288)
+$optPanel.Size = New-Object System.Drawing.Size(352, 216)
 $optPanel.FlowDirection = [System.Windows.Forms.FlowDirection]::TopDown
 $optPanel.WrapContents = $false
 $optPanel.AutoScroll = $true
@@ -372,8 +443,19 @@ function Show-ModeOptions {
         $check.Size = New-Object System.Drawing.Size(330, 30)
         $check.ForeColor = $colText
         $check.FlatStyle = [System.Windows.Forms.FlatStyle]::Flat
+        $check.Checked = [bool]$opt.Default
         $optPanel.Controls.Add($check)
         $script:OptChecks[$opt.Id] = $check
+    }
+    $script:SinceBox = $null
+    if ($def.Since) {
+        $sinceLabel = New-Label -Text 'Changed since (blank = auto from last sync):' -X 4 -Y 4 -W 330 -Color $colMuted -Size 8
+        $optPanel.Controls.Add($sinceLabel)
+        $script:SinceBox = New-Object System.Windows.Forms.TextBox
+        $script:SinceBox.Size = New-Object System.Drawing.Size(330, 24)
+        $script:SinceBox.BackColor = $colPanel2
+        $script:SinceBox.ForeColor = $colText
+        $optPanel.Controls.Add($script:SinceBox)
     }
     if ($def.Options.Count -eq 0) {
         $none = New-Label -Text 'No options - this step is read-only.' -X 4 -Y 4 -W 300 -Color $colMuted
@@ -384,6 +466,9 @@ function Show-ModeOptions {
 }
 
 function Get-CurrentMode {
+    if ($radioRepairChats.Checked) { return 'repairchats' }
+    if ($radioDeltaCollect.Checked) { return 'deltacollect' }
+    if ($radioDeltaApply.Checked) { return 'deltaapply' }
     if ($radioVerify.Checked) { return 'verify' }
     if ($radioRestore.Checked) { return 'restore' }
     return 'collect'
@@ -404,6 +489,9 @@ function Set-Running {
     $radioCollect.Enabled = -not $Value
     $radioVerify.Enabled = -not $Value
     $radioRestore.Enabled = -not $Value
+    $radioDeltaCollect.Enabled = -not $Value
+    $radioDeltaApply.Enabled = -not $Value
+    $radioRepairChats.Enabled = -not $Value
     $browseButton.Enabled = -not $Value
     $pathBox.Enabled = -not $Value
     $optPanel.Enabled = -not $Value
@@ -423,23 +511,29 @@ function Start-Run {
         return
     }
     $path = $pathBox.Text.Trim()
-    if ([string]::IsNullOrWhiteSpace($path)) {
+    if ($def.NoPath) { $path = '' }
+    elseif ([string]::IsNullOrWhiteSpace($path)) {
         Add-LogLine -Text 'Please choose a folder first (step 2).' -Color $colWarn
         return
     }
-    if ($mode -ne 'collect' -and -not (Test-Path -LiteralPath $path)) {
-        $answer = [System.Windows.Forms.MessageBox]::Show("The folder does not exist:`n$path`n`nRun anyway?", 'Folder not found', 'YesNo', 'Warning')
+    $pathExists = (Test-Path -LiteralPath $path) -or (Test-Path -LiteralPath ($path.TrimEnd('\') + '.zip')) -or (Test-Path -LiteralPath ($path.TrimEnd('\') + '.zip.json'))
+    if (-not $def.NoPath -and $mode -notin @('collect', 'deltacollect', 'deltaapply') -and -not $pathExists) {
+        $answer = [System.Windows.Forms.MessageBox]::Show("Nothing found at:`n$path`n`nIf OneDrive is still syncing, the restore will wait for it. Run anyway?", 'Package not found yet', 'YesNo', 'Warning')
         if ($answer -ne 'Yes') { return }
     }
 
     Reset-Log
-    $modeName = @{ 'collect' = 'Collect'; 'verify' = 'Verify'; 'restore' = 'Restore' }[$mode]
+    $modeName = @{ 'collect' = 'Collect'; 'verify' = 'Verify'; 'restore' = 'Restore'; 'deltacollect' = 'Delta collect'; 'deltaapply' = 'Delta apply'; 'repairchats' = 'Chat repair' }[$mode]
     Add-LogLine -Text ('=== ' + $modeName + ' started ' + (Get-Date -Format 'yyyy-MM-dd HH:mm:ss') + ' ===') -Color $colAccent
     Add-LogLine -Text ('Script: ' + $target) -Color $colMuted
 
     $arguments = @()
-    $arguments += $def.PathArg
-    $arguments += $path
+    if ($def.Fixed) { $arguments += $def.Fixed }
+    if (-not $def.NoPath) {
+        $arguments += $def.PathArg
+        $arguments += $path
+    }
+    if ($script:SinceBox -and $script:SinceBox.Text.Trim()) { $arguments += '-Since'; $arguments += $script:SinceBox.Text.Trim() }
     $script:Interactive = $false
     foreach ($id in $script:OptChecks.Keys) {
         if (-not $script:OptChecks[$id].Checked) { continue }
@@ -492,8 +586,11 @@ function Pump-Log {
     if (-not $script:LogFile) { return }
     if (-not (Test-Path -LiteralPath $script:LogFile)) { return }
     try {
-        $encoding = New-Object System.Text.UTF8Encoding($false)
-        $text = [System.IO.File]::ReadAllText($script:LogFile, $encoding)
+        $fs = [System.IO.File]::Open($script:LogFile, 'Open', 'Read', 'ReadWrite, Delete')
+        try {
+            $reader = New-Object System.IO.StreamReader($fs, (New-Object System.Text.UTF8Encoding($false)))
+            $text = $reader.ReadToEnd()
+        } finally { $fs.Dispose() }
     } catch { return }
     if ($text.Length -le $script:LogLength) { return }
     $new = $text.Substring($script:LogLength)
@@ -519,7 +616,7 @@ function Complete-Run {
         $elapsed = (' ({0:N0}s)' -f $span.TotalSeconds)
     }
     $text = $logBox.Text
-    $summary = [regex]::Match($text, '(Collection|Restore|Verification) finished[:,]?[^\r\n]*')
+    $summary = [regex]::Match($text, '(Collection|Restore|Verification|Delta) finished[:,]?[^\r\n]*|Relinked [^\r\n]*|Nothing to relink[^\r\n]*|\d+ window\(s\) would be relinked[^\r\n]*')
     if ($summary.Success) {
         $statusLabel.Text = $summary.Value.Trim() + $elapsed
         $statusLabel.ForeColor = $colPink
@@ -559,6 +656,12 @@ $script:Timer.Add_Tick({
 function Refresh-Mode {
     $mode = Get-CurrentMode
     $suggested = Get-DefaultPackagePath
+    if ($mode -in @('deltacollect', 'deltaapply')) {
+        $deltaPath = Get-DefaultDeltaPath
+        if ([string]::IsNullOrWhiteSpace($pathBox.Text) -or $pathBox.Text -eq $suggested) { $pathBox.Text = $deltaPath }
+    } elseif ($pathBox.Text -eq (Get-DefaultDeltaPath)) {
+        $pathBox.Text = $suggested
+    }
     if ($mode -eq 'collect') {
         if ([string]::IsNullOrWhiteSpace($pathBox.Text)) { $pathBox.Text = $suggested }
     } else {
@@ -570,6 +673,9 @@ function Refresh-Mode {
 $radioCollect.Add_CheckedChanged({ if ($radioCollect.Checked) { Refresh-Mode } })
 $radioVerify.Add_CheckedChanged({ if ($radioVerify.Checked) { Refresh-Mode } })
 $radioRestore.Add_CheckedChanged({ if ($radioRestore.Checked) { Refresh-Mode } })
+$radioDeltaCollect.Add_CheckedChanged({ if ($radioDeltaCollect.Checked) { Refresh-Mode } })
+$radioDeltaApply.Add_CheckedChanged({ if ($radioDeltaApply.Checked) { Refresh-Mode } })
+$radioRepairChats.Add_CheckedChanged({ if ($radioRepairChats.Checked) { Refresh-Mode } })
 
 $browseButton.Add_Click({
     $dialog = New-Object System.Windows.Forms.FolderBrowserDialog

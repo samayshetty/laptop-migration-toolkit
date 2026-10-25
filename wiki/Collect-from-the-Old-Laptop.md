@@ -2,7 +2,7 @@
 
 <div align="center">
 
-[Home](Home) &#183; [Setup](First-Time-Setup) &#183; [GUI](Using-the-GUI) &#183; [Getting Started](Getting-Started) &#183; [Collect](Collect-from-the-Old-Laptop) &#183; [Verify](Verify-the-Package) &#183; [Restore](Restore-on-the-New-Laptop) &#183; [App Modes](App-Selection-and-Granularity) &#183; [Conflicts](Conflicts-and-Version-Mismatch) &#183; [Security](Security-and-Privacy) &#183; [No Admin](No-Administrator-Rights) &#183; [Troubleshooting](Troubleshooting) &#183; [FAQ](FAQ)
+[Home](Home) &#183; [Setup](First-Time-Setup) &#183; [GUI](Using-the-GUI) &#183; [Getting Started](Getting-Started) &#183; [Collect](Collect-from-the-Old-Laptop) &#183; [Verify](Verify-the-Package) &#183; [Restore](Restore-on-the-New-Laptop) &#183; [Delta Sync](Delta-Sync) &#183; [App Modes](App-Selection-and-Granularity) &#183; [Conflicts](Conflicts-and-Version-Mismatch) &#183; [Security](Security-and-Privacy) &#183; [No Admin](No-Administrator-Rights) &#183; [Troubleshooting](Troubleshooting) &#183; [FAQ](FAQ)
 
 </div>
 
@@ -38,7 +38,7 @@ is collected, only Wi-Fi passwords and the power scheme are skipped (see
 | `-SkipApps` | Skip the application inventory (rarely needed). |
 | `-IncludeVscodeHistory` | Also collect VS Code edit history and workspace storage. These are caches and are excluded by default because they add tens of thousands of tiny files to the package. |
 | `-IncludeCursorExtensions` | Also collect installed Cursor extensions (`.cursor\extensions`). Excluded by default. |
-| `-Archive` | Also write the package as a single `.zip` next to the folder (uses `tar.exe`). Much faster to copy to a USB drive or upload to a cloud drive. |
+| `-Archive` | Build the package on the local disk and write **only** `<OutputPath>.zip` plus `<OutputPath>.zip.json` (SHA-256 checksum) to the output location. One file instead of tens of thousands - OneDrive uploads it in minutes, and Verify/Restore on the new laptop wait for it automatically. Ticked by default in the GUI. |
 | `-NonInteractive` | Never prompt (for automation). |
 | `-NoElevate` | Do not offer to relaunch as administrator. |
 
