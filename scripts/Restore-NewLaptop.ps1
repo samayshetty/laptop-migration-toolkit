@@ -14,7 +14,7 @@ param(
     [switch]$SkipUserFiles
 )
 
-$ToolkitVersion = '1.2.0'
+$ToolkitVersion = '1.2.1'
 $ErrorActionPreference = 'Continue'
 $ProgressPreference = 'SilentlyContinue'
 
@@ -28,6 +28,7 @@ $script:WingetDump = ''
 
 $script:AppDataMap = [ordered]@{
     'Microsoft.VisualStudioCode' = @{ Bundle = 'vs-code';          Name = 'VS Code settings & extensions' }
+    'Microsoft.VisualStudioCode.Insiders' = @{ Bundle = 'vscode-insiders'; Name = 'VS Code Insiders settings & extensions' }
     'Google.Chrome'              = @{ Bundle = 'browser-chrome';   Name = 'Chrome bookmarks' }
     'Microsoft.Edge'             = @{ Bundle = 'browser-edge';     Name = 'Edge bookmarks' }
     'Microsoft.WindowsTerminal'  = @{ Bundle = 'windows-terminal'; Name = 'Windows Terminal settings' }
@@ -138,6 +139,7 @@ function Test-BundlePresent {
     $pkg = $script:PackagePath
     switch ($Bundle) {
         'vs-code'          { return ((Test-Path -LiteralPath (Join-Path $pkg 'dev\vscode-user')) -or (Test-Path -LiteralPath (Join-Path $pkg 'dev\vscode-extensions.txt'))) }
+        'vscode-insiders'  { return ((Test-Path -LiteralPath (Join-Path $pkg 'dev\vscode-insiders-user')) -or (Test-Path -LiteralPath (Join-Path $pkg 'dev\vscode-insiders-extensions.txt'))) }
         'windows-terminal' { return (@(Get-ChildItem -LiteralPath (Join-Path $pkg 'terminals') -ErrorAction SilentlyContinue | Where-Object { $_.PSIsContainer }).Count -gt 0) }
         'powershell'       { return ((Test-Path -LiteralPath (Join-Path $pkg 'dev\powershell\WindowsPowerShell')) -or (Test-Path -LiteralPath (Join-Path $pkg 'dev\powershell\PowerShell7'))) }
         'agent-configs'    { return (@(Get-ChildItem -LiteralPath (Join-Path $pkg 'dev\agent-configs') -Force -ErrorAction SilentlyContinue).Count -gt 0) }
@@ -255,6 +257,7 @@ function Build-Plan {
 
     $bundleDefs = @(
         @{ Id = 'vs-code';          Name = 'VS Code settings & extensions' },
+        @{ Id = 'vscode-insiders';  Name = 'VS Code Insiders settings & extensions' },
         @{ Id = 'windows-terminal'; Name = 'Windows Terminal settings' },
         @{ Id = 'powershell';       Name = 'PowerShell profiles' },
         @{ Id = 'agent-configs';    Name = 'Agent/skill configs (opencode, Claude, Codex, Gemini, Cursor)' },
@@ -485,31 +488,46 @@ function Invoke-AppExec {
     }
 }
 
+function Restore-VsCodeBundle {
+    param([string]$UserDir, [string]$PackageDir, [string]$AgentDir)
+    if (Get-Process -Name 'Code', 'Code - Insiders' -ErrorAction SilentlyContinue) {
+        throw 'Close BOTH VS Code editions before restoring chat data. Run from standalone PowerShell.'
+    }
+    $src = Join-Path $script:PackagePath "dev\$PackageDir"
+    if (Test-Path -LiteralPath $src) { RestoreTree $src (Join-Path $env:APPDATA "$UserDir\User") }
+    $src = Join-Path $script:PackagePath "dev\$AgentDir"
+    if (Test-Path -LiteralPath $src) { RestoreTree $src (Join-Path $env:APPDATA "$UserDir\agentSessionData") }
+}
+
+function Install-CodeExtensionLists {
+    foreach ($fl in @(
+        @{ Bundle = 'vs-code'; File = 'vscode-extensions.txt'; Cli = 'stable' },
+        @{ Bundle = 'vscode-insiders'; File = 'vscode-insiders-extensions.txt'; Cli = 'insiders' }
+    )) {
+        if (-not ($script:Plan | Where-Object { $_.Id -eq $fl.Bundle -and $_.Apply -and $_.Present })) { continue }
+        $extFile = Join-Path $script:PackagePath "dev\$($fl.File)"
+        if (-not (Test-Path -LiteralPath $extFile)) { continue }
+        $cli = Get-VsCodeCli $fl.Cli
+        if (-not $cli) { Log "VS Code ($($fl.Cli)) CLI not found - install the editor and rerun to add extensions" 'WARN'; continue }
+        $exts = @(Get-Content -LiteralPath $extFile | Where-Object { $_.Trim() })
+        Set-NodeCaFromWindows
+        $bad = @()
+        foreach ($ext in $exts) {
+            if ((Install-VsCodeExtension -Cli $cli -Id $ext.Trim()) -ne 'ok') { $bad += $ext.Trim() }
+        }
+        if ($bad.Count) { Log "VS Code ($($fl.Cli)) extensions not installed: $($bad -join ', ')" 'WARN' }
+        else { Log "VS Code ($($fl.Cli)): $($exts.Count) extensions installed" 'OK' }
+    }
+}
+
 function Invoke-Bundle {
     param([string]$Bundle)
     switch ($Bundle) {
         'vs-code' {
-            $src = Join-Path $script:PackagePath 'dev\vscode-user'
-            if (Test-Path -LiteralPath $src) { RestoreTree $src (Join-Path $env:APPDATA 'Code\User') }
-            $extFile = Join-Path $script:PackagePath 'dev\vscode-extensions.txt'
-            if (Test-Path -LiteralPath $extFile) {
-                $codeCli = Get-CodeCli
-                if ($codeCli) {
-                    $exts = @(Get-Content -LiteralPath $extFile | Where-Object { $_.Trim() })
-                    if ($exts.Count -eq 0) {
-                        Log 'No VS Code extensions listed in the package' 'OK'
-                    } else {
-                        Set-NodeCaFromWindows
-                        Log "Installing $($exts.Count) VS Code extensions..." 'STEP'
-                        $bad = @()
-                        foreach ($ext in $exts) { if ((Install-VsCodeExtension -Cli $codeCli -Id $ext.Trim()) -ne 'ok') { $bad += $ext.Trim() } }
-                        if ($bad.Count -eq 0) { Log 'VS Code extensions installed' 'OK' }
-                        else { Log ("{0} of {1} extensions not installed (install from the Extensions panel): {2}" -f $bad.Count, $exts.Count, ($bad -join ', ')) 'WARN' }
-                    }
-                } else {
-                    Log 'VS Code CLI not found - install VS Code, then re-run this restore to add extensions' 'WARN'
-                }
-            }
+            Restore-VsCodeBundle 'Code' 'vscode-user' 'vscode-agentSessionData'
+        }
+        'vscode-insiders' {
+            Restore-VsCodeBundle 'Code - Insiders' 'vscode-insiders-user' 'vscode-insiders-agentSessionData'
         }
         'windows-terminal' {
             $termMap = [ordered]@{
@@ -814,6 +832,9 @@ foreach ($p in $script:Plan) {
         default           { Invoke-Bundle -Bundle $p.Id }
     }
 }
+
+# Extension CLIs can start editor processes; run them after both editions' data is restored.
+Install-CodeExtensionLists
 
 if ($script:RegistryApplied -and -not $SkipExplorerRestart) {
     Stop-Process -Name explorer -Force -ErrorAction SilentlyContinue

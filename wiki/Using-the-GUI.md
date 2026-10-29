@@ -89,6 +89,15 @@ In File Explorer, go into the `scripts` folder, **right-click `Start-MigrationGu
 
 See [Delta Sync](Delta-Sync) for what the delta tasks do.
 
+For collect, delta collect/apply or chat repair, close **both VS Code editions** and run
+this window from standalone Windows PowerShell. Update the entire `scripts` folder on
+both laptops before reopening the GUI. A fresh delta includes complete chat bundles even
+when their dates are old; other settings remain incremental. The apply task processes
+**all unapplied deltas oldest first**, not just the newest zip.
+
+The repair checkbox defaults to **Apply**: untick it for a read-only preview first.
+Conflicting/unreadable chats are retained and reported, not silently replaced.
+
 ---
 
 ## ⌨️ The two options that open a console window

@@ -2,6 +2,44 @@
 
 All notable changes to this project are documented in this file.
 
+## [1.2.1] - 2026-10-29
+
+Reliable VS Code / Insiders conversation recovery after a full backup or delta.
+
+### Fixed
+
+- Compare replayed `.json` / `.jsonl` conversation contents instead of file timestamps:
+  reopening a stale chat no longer makes it win over a complete conversation.
+- Preserve divergent, unreadable and ambiguous sessions for manual review. Keep backups
+  and verify copied chat files; a failed delta is not recorded as applied.
+- Merge matching chat-index entries in `state.vscdb` instead of replacing existing
+  workspace/global databases. Preserve unrelated settings and new-laptop-only chats.
+- Carry matching editing state, transcripts, attachments (`agentSessionData`) and
+  checkpoints. Each fresh delta includes complete chat bundles even when their dates
+  predate the cutoff, recovering chats omitted by older full backups.
+- Handle transitions between JSON and JSONL chat storage with backups and verification.
+- Use valid Windows special-folder names for optional Documents/Pictures collection.
+- Process all unapplied deltas oldest first, retaining compatibility with older filenames.
+  New delta filenames include seconds to avoid overwriting a previous run in the same minute.
+- Do not advance the delta cutoff on copy/archive failures; snapshot SQLite databases
+  with the Windows SQLite backup API.
+
+### Changed
+
+- Full collection keeps per-folder chats by default for both Stable and Insiders, plus
+  attachments and `.copilot` configuration. `-IncludeVscodeHistory` only controls edit history.
+- Both VS Code editions must be closed before collecting, restoring chat data, applying
+  deltas or applying chat repairs. Launch the GUI from standalone Windows PowerShell.
+- Full restore supports Insiders data/extensions and defers extension installation until
+  both editions' data is restored.
+- GUI hints, upgrade steps and troubleshooting now describe content-based recovery.
+
+### Added
+
+- Shared `ChatHistory.ps1` journal replay/comparison helpers.
+- `Test-ChatRecovery.ps1`: isolated regression tests using synthetic chats, attachments,
+  checkpoints and SQLite databases, without modifying live editor history.
+
 ## [1.2.0] - 2026-10-25
 
 One-touch OneDrive transfers, delta sync, and fixes found during a real migration.

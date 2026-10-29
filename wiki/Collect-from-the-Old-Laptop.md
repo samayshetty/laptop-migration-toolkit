@@ -36,7 +36,7 @@ is collected, only Wi-Fi passwords and the power scheme are skipped (see
 | `-ExtraFolders "D:\Projects","C:\code"` | Copy additional folders that live outside your user profile. |
 | `-SkipSSH` | Do not collect `~\.ssh`. Use this whenever the package goes to any cloud drive (corporate OneDrive!). |
 | `-SkipApps` | Skip the application inventory (rarely needed). |
-| `-IncludeVscodeHistory` | Also collect VS Code edit history and workspace storage. These are caches and are excluded by default because they add tens of thousands of tiny files to the package. |
+| `-IncludeVscodeHistory` | Also collect VS Code edit history (excluded by default). Stable and Insiders workspace chat storage, editing state and attachments are always collected. |
 | `-IncludeCursorExtensions` | Also collect installed Cursor extensions (`.cursor\extensions`). Excluded by default. |
 | `-Archive` | Build the package on the local disk and write **only** `<OutputPath>.zip` plus `<OutputPath>.zip.json` (SHA-256 checksum) to the output location. One file instead of tens of thousands - OneDrive uploads it in minutes, and Verify/Restore on the new laptop wait for it automatically. Ticked by default in the GUI. |
 | `-NonInteractive` | Never prompt (for automation). |

@@ -3,7 +3,7 @@ param(
     [Parameter(Mandatory = $true)][string]$PackagePath
 )
 
-$ToolkitVersion = '1.2.0'
+$ToolkitVersion = '1.2.1'
 $ErrorActionPreference = 'Continue'
 $script:Findings = New-Object System.Collections.Generic.List[string]
 $script:ProblemCount = 0
@@ -36,6 +36,7 @@ function Test-BundlePresent {
     param([string]$Bundle, [string]$Pkg)
     switch ($Bundle) {
         'vs-code'          { return ((Test-Path -LiteralPath (Join-Path $Pkg 'dev\vscode-user')) -or (Test-Path -LiteralPath (Join-Path $Pkg 'dev\vscode-extensions.txt'))) }
+        'vscode-insiders'  { return ((Test-Path -LiteralPath (Join-Path $Pkg 'dev\vscode-insiders-user')) -or (Test-Path -LiteralPath (Join-Path $Pkg 'dev\vscode-insiders-extensions.txt'))) }
         'windows-terminal' { return (@(Get-ChildItem -LiteralPath (Join-Path $Pkg 'terminals') -ErrorAction SilentlyContinue | Where-Object { $_.PSIsContainer }).Count -gt 0) }
         'powershell'       { return ((Test-Path -LiteralPath (Join-Path $Pkg 'dev\powershell\WindowsPowerShell')) -or (Test-Path -LiteralPath (Join-Path $Pkg 'dev\powershell\PowerShell7'))) }
         'agent-configs'    { return (@(Get-ChildItem -LiteralPath (Join-Path $Pkg 'dev\agent-configs') -Force -ErrorAction SilentlyContinue).Count -gt 0) }
@@ -133,11 +134,12 @@ if (Test-Path -LiteralPath (Join-Path $Pkg 'apps')) {
     Log 'apps\ folder missing - no application inventory in this package' 'WARN'
 }
 
-$bundlesToCheck = @('vs-code', 'windows-terminal', 'powershell', 'agent-configs', 'dotfiles', 'git-config', 'browser-chrome', 'browser-edge', 'ssh', 'wifi', 'power', 'fonts', 'env')
+$bundlesToCheck = @('vs-code', 'vscode-insiders', 'windows-terminal', 'powershell', 'agent-configs', 'dotfiles', 'git-config', 'browser-chrome', 'browser-edge', 'ssh', 'wifi', 'power', 'fonts', 'env')
 foreach ($b in $bundlesToCheck) { $bundleInfo[$b] = (Test-BundlePresent -Bundle $b -Pkg $Pkg) }
 
 $names = [ordered]@{
     'vs-code'          = 'VS Code settings & extensions'
+    'vscode-insiders'  = 'VS Code Insiders settings & extensions'
     'windows-terminal' = 'Windows Terminal settings'
     'powershell'       = 'PowerShell profiles'
     'agent-configs'    = 'Agent/skill configs'

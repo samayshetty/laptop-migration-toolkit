@@ -4,7 +4,7 @@
 
 <br><br>
 
-[![Version](https://img.shields.io/badge/version-1.2.0-6366f1?style=for-the-badge&labelColor=111827)](https://github.com/samayshetty/laptop-migration-toolkit/releases)
+[![Version](https://img.shields.io/badge/version-1.2.1-6366f1?style=for-the-badge&labelColor=111827)](CHANGELOG.md)
 [![License](https://img.shields.io/badge/license-MIT-22c55e?style=for-the-badge&labelColor=111827)](LICENSE)
 [![Platform](https://img.shields.io/badge/platform-Windows%2010%20%7C%2011-0078d4?style=for-the-badge&labelColor=111827&logo=windows&logoColor=white)](#-requirements)
 [![PowerShell](https://img.shields.io/badge/PowerShell-5.1-5391FE?style=for-the-badge&labelColor=111827&logo=powershell&logoColor=white)](#-requirements)
@@ -52,6 +52,8 @@
 
 > [!IMPORTANT]
 > Collect on the **old** laptop, verify then restore on the **new** one.
+> Close **both VS Code and VS Code Insiders** before collection or chat restore.
+> Run the GUI/scripts from standalone Windows PowerShell, not an editor terminal.
 
 ```powershell
 # ─────────────────────────────────────────────────────────────
@@ -109,10 +111,25 @@ flowchart LR
 
 | Script | Run it on | What it does |
 | --- | --- | --- |
-| `scripts/Start-MigrationGui.ps1` | either laptop | Optional window that runs the other three for you |
+| `scripts/Start-MigrationGui.ps1` | either laptop | Optional window for full migration, delta sync and chat recovery |
 | `scripts/Collect-OldLaptop.ps1` | 🖥️ old laptop | Collects everything into one portable "migration package" |
 | `scripts/Verify-Package.ps1` | 💻 new laptop | Read-only review of the package before you restore |
 | `scripts/Restore-NewLaptop.ps1` | 💻 new laptop | Interactive plan editor + restore engine |
+| `scripts/Sync-Delta.ps1` | both laptops | Collect changes on old; apply all unapplied deltas on new |
+| `scripts/Repair-WorkspaceChats.ps1` | 💻 new laptop | Preview/apply recovery of missing or stale per-folder conversations |
+| `scripts/ChatHistory.ps1` | shared helper | Replays chat journals and compares conversation contents |
+| `scripts/Test-ChatRecovery.ps1` | development | Isolated synthetic regression suite |
+
+### Already restored the full package?
+
+You do **not** need to repeat the full backup. Update the **entire `scripts` folder on both
+laptops**, reopen the GUI, then follow [Delta Sync](wiki/Delta-Sync.md#upgrading-after-an-existing-full-backup).
+A fresh delta includes complete chat bundles, attachments and checkpoints, even when older
+backups omitted them. Other settings remain incremental.
+
+Chat recovery uses conversation contents, not unreliable file dates. Conflicting histories
+are reported and retained for review; this is **old-to-new migration**, not automatic
+two-way synchronization. Keep each person's migration packages private and separate.
 
 ---
 
@@ -142,7 +159,7 @@ flowchart LR
 <td valign="top" width="50%">
 
 **🧑‍💻 Developer &amp; agent configs**
-- VS Code settings + extension list
+- VS Code / Insiders settings, extensions, per-folder chats, attachments and checkpoints
 - Windows Terminal, PowerShell profiles
 - opencode, Claude, Codex, Gemini, Cursor
 - dotfiles (`.npmrc`, `.wslconfig`, `.vimrc`, `.gitconfig`)
@@ -254,7 +271,7 @@ The restore detects it automatically, doesn't ask for elevation you can't grant,
 | `-ExtraFolders "D:\Projects"` | Copy folders outside your user profile. |
 | `-SkipSSH` | Do not collect `~\.ssh`. |
 | `-SkipApps` | Skip the application inventory. |
-| `-IncludeVscodeHistory` | Include VS Code edit history / workspace storage. |
+| `-IncludeVscodeHistory` | Include VS Code edit history. Per-folder chat storage is always collected. |
 | `-IncludeCursorExtensions` | Include installed Cursor extensions. |
 | `-Archive` | Also write a single `.zip` next to the folder. |
 | `-NonInteractive` | Never prompt. |
@@ -305,6 +322,8 @@ The restore detects it automatically, doesn't ask for elevation you can't grant,
 
 ```text
 scripts/   Start-MigrationGui.ps1 | Collect-OldLaptop.ps1 | Verify-Package.ps1 | Restore-NewLaptop.ps1
+           Sync-Delta.ps1 | Repair-WorkspaceChats.ps1 | ChatHistory.ps1 | MigrationCommon.ps1
+           Test-ChatRecovery.ps1
 wiki/      full documentation (start at Home)
 assets/    banner artwork
 docs/      helper to publish the wiki
@@ -314,6 +333,15 @@ docs/      helper to publish the wiki
 
 Ideas, bug reports and pull requests are welcome - the most useful thing you can send is
 a **new app-data mapping** (tell us which bundle an app's data should restore from).
+
+Run the chat/delta regression suite from the repository root in Windows PowerShell 5.1:
+
+```powershell
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\Test-ChatRecovery.ps1
+```
+
+Tests use synthetic data in temporary folders, mock editor/extension operations, and leave
+your live chat history untouched. Real editors must remain closed for an actual migration.
 
 ## 📄 License
 

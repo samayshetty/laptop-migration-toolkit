@@ -2,6 +2,9 @@
 Package/
 MigrationPackage*/
 MigrationBackup*/
+MigrationDelta/
+delta-*.zip
+delta-*.zip.json
 
 # Logs and temp
 *.log

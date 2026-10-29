@@ -1,7 +1,7 @@
 [CmdletBinding()]
 param()
 
-$GuiVersion = '1.2.0'
+$GuiVersion = '1.2.1'
 $ErrorActionPreference = 'Stop'
 
 if (-not [Environment]::UserInteractive) { exit 0 }
@@ -72,7 +72,7 @@ $script:ModeDefs = [ordered]@{
         PathLabel = 'Where to write the delta zip (one file):'
         PathArg   = '-Path'
         Browse    = 'Choose where to write the delta zip'
-        Note      = 'Only files changed since the last sync are packed (VS Code, Insiders, Notepad, Notepad++, OneNote, agent configs).'
+        Note      = 'Close BOTH VS Code editions first. Packs changed files plus complete chat bundles, attachments and checkpoints.'
         Fixed     = @('-Mode', 'Collect')
         Since     = $true
         Options   = @(
@@ -81,10 +81,10 @@ $script:ModeDefs = [ordered]@{
     }
     'deltaapply' = @{
         Script    = 'Sync-Delta.ps1'
-        PathLabel = 'Folder holding delta-*.zip (newest is used):'
+        PathLabel = 'Folder holding delta-*.zip (all unapplied, oldest first):'
         PathArg   = '-Path'
         Browse    = 'Choose the folder with the delta zip'
-        Note      = 'Only newer files are written; overwritten files are backed up to the Desktop.'
+        Note      = 'Close both VS Code editions first. Files are backed up; chat relinking compares conversation contents.'
         Fixed     = @('-Mode', 'Apply')
         Options   = @(
             @{ Id = 'CloseApps';      Text = 'Close VS Code, Notepad++, OneNote and browsers first'; Default = $true }
@@ -96,7 +96,7 @@ $script:ModeDefs = [ordered]@{
         PathLabel = 'No folder needed for this step.'
         NoPath    = $true
         Browse    = ''
-        Note      = 'Open each project folder once in VS Code on this laptop, CLOSE VS Code, then run this.'
+        Note      = 'Open project folders once, close BOTH VS Code editions, then run. Repairs stale messages and editing state; divergent chats are retained and reported.'
         Options   = @(
             @{ Id = 'Apply'; Text = 'Apply (untick for a read-only preview)'; Default = $true }
         )
@@ -106,7 +106,7 @@ $script:ModeDefs = [ordered]@{
         PathLabel         = 'Where to create the migration package:'
         PathArg           = '-OutputPath'
         Browse            = 'Choose where to create the migration package'
-        Note              = 'Start this app as Administrator if you want Wi-Fi passwords included.'
+        Note              = 'Close BOTH VS Code editions first. Start as Administrator if you want Wi-Fi passwords included.'
         Options           = @(
             @{ Id = 'InteractiveApps';        Text = 'Choose which apps to carry over (opens a console window)' }
             @{ Id = 'IncludeUserFiles';       Text = 'Also copy Desktop, Documents, Downloads, Pictures...' }

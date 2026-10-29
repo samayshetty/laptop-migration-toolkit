@@ -13,7 +13,7 @@ param(
     [switch]$NoElevate
 )
 
-$ToolkitVersion = '1.2.0'
+$ToolkitVersion = '1.2.1'
 $PackageFormat = 2
 $ErrorActionPreference = 'Continue'
 $ProgressPreference = 'SilentlyContinue'
@@ -71,12 +71,13 @@ function EnsureDir {
 }
 
 function CopyTree {
-    param([string]$Source, [string]$Destination, [string[]]$ExcludeDirs = @())
+    param([string]$Source, [string]$Destination, [string[]]$ExcludeDirs = @(), [string[]]$ExcludeFiles = @())
     if (-not (Test-Path -LiteralPath $Source)) { return $false }
     try {
         EnsureDir $Destination | Out-Null
         $rcArgs = @($Source, $Destination, '/E', '/R:1', '/W:1', '/XJ', '/NFL', '/NDL', '/NJH', '/NJS', '/NP')
         foreach ($xd in $ExcludeDirs) { $rcArgs += @('/XD', $xd) }
+        foreach ($xf in $ExcludeFiles) { $rcArgs += @('/XF', $xf) }
         robocopy @rcArgs | Out-Null
         if ($LASTEXITCODE -ge 8) { throw "robocopy exit code $LASTEXITCODE" }
         return $true
@@ -103,6 +104,7 @@ function Test-DataAvailable {
     param([string]$AppId)
     switch ($AppId) {
         'Microsoft.VisualStudioCode' { return (Test-Path -LiteralPath (Join-Path $env:APPDATA 'Code\User')) }
+        'Microsoft.VisualStudioCode.Insiders' { return (Test-Path -LiteralPath (Join-Path $env:APPDATA 'Code - Insiders\User')) }
         'Google.Chrome'              { return (Test-Path -LiteralPath (Join-Path $env:LOCALAPPDATA 'Google\Chrome\User Data\Default\Bookmarks')) }
         'Microsoft.Edge'             { return (Test-Path -LiteralPath (Join-Path $env:LOCALAPPDATA 'Microsoft\Edge\User Data\Default\Bookmarks')) }
         'Microsoft.WindowsTerminal'  { return ((Test-Path -LiteralPath (Join-Path $env:LOCALAPPDATA 'Packages\Microsoft.WindowsTerminal_8wekyb3d8bbwe\LocalState\settings.json')) -or (Test-Path -LiteralPath (Join-Path $env:LOCALAPPDATA 'Microsoft\Windows Terminal\settings.json'))) }
@@ -158,6 +160,7 @@ $isAdmin = Test-Admin
 if (-not $isAdmin) { Log 'Running without Administrator rights - Wi-Fi passwords will not be exported' 'WARN' }
 
 $stamp = Get-Date -Format 'yyyyMMdd-HHmm'
+$collectStarted = Get-Date
 if (-not $OutputPath) {
     $desktopBase = [Environment]::GetFolderPath('Desktop')
     if ([string]::IsNullOrWhiteSpace($desktopBase) -or -not (Test-Path -LiteralPath $desktopBase)) { $desktopBase = $env:USERPROFILE }
@@ -167,6 +170,10 @@ if (-not $OutputPath) {
 $OutputPath = [IO.Path]::GetFullPath($OutputPath)
 if ($ExtraFolders.Count -eq 1 -and $ExtraFolders[0] -like '*,*') { $ExtraFolders = $ExtraFolders[0] -split ',' }
 . (Join-Path $PSScriptRoot 'MigrationCommon.ps1')
+if (Get-Process -Name 'Code', 'Code - Insiders' -ErrorAction SilentlyContinue) {
+    Log 'Close VS Code and VS Code Insiders before collecting. Run from standalone PowerShell so chats and SQLite state are fully saved.' 'ERROR'
+    exit 1
+}
 $script:ZipTarget = $null
 if ($Archive) {
     # Build on the local disk; only the single zip (+ checksum) goes to the cloud folder.
@@ -310,26 +317,37 @@ foreach ($k in $terminals.Keys) {
 
 Log 'Collecting developer, agent and skill configurations...' 'STEP'
 $devDir = EnsureDir (Join-Path $OutputPath 'dev')
-$codeUser = Join-Path $env:APPDATA 'Code\User'
-if (Test-Path -LiteralPath $codeUser) {
-    $codeExclude = @()
-    if (-not $IncludeVscodeHistory) {
-        $codeExclude = @('History', 'workspaceStorage', 'CachedData', 'CachedExtensionVSIXs', 'Backups', 'logs') | ForEach-Object { Join-Path $codeUser $_ }
+# workspaceStorage is persistent chat data, not a disposable cache.
+$flavors = @(
+    @{ Name = 'VS Code'; User = 'Code'; Dir = 'vscode-user'; AgentDir = 'vscode-agentSessionData'; Ext = 'vscode-extensions.txt'; Cli = 'stable' },
+    @{ Name = 'VS Code Insiders'; User = 'Code - Insiders'; Dir = 'vscode-insiders-user'; AgentDir = 'vscode-insiders-agentSessionData'; Ext = 'vscode-insiders-extensions.txt'; Cli = 'insiders' }
+)
+foreach ($fl in $flavors) {
+    $codeRoot = Join-Path $env:APPDATA $fl.User
+    $codeUser = Join-Path $codeRoot 'User'
+    if (Test-Path -LiteralPath $codeUser) {
+        $ex = @('CachedData', 'CachedExtensionVSIXs', 'Backups', 'logs') | ForEach-Object { Join-Path $codeUser $_ }
+        if (-not $IncludeVscodeHistory) { $ex += (Join-Path $codeUser 'History') }
+        if (CopyTree $codeUser (Join-Path $devDir $fl.Dir) $ex @('local-index*.db', 'workspace-chunks.json')) {
+            Log "$($fl.Name) settings, prompts and per-folder chats collected" 'OK'
+        }
     }
-    if (CopyTree $codeUser (Join-Path $devDir 'vscode-user') $codeExclude) {
-        if ($IncludeVscodeHistory) { Log 'VS Code user settings collected (including edit history and workspace storage)' 'OK' }
-        else { Log 'VS Code user settings collected (edit history / workspace storage excluded - use -IncludeVscodeHistory to keep them)' 'OK' }
+    if (CopyTree (Join-Path $codeRoot 'agentSessionData') (Join-Path $devDir $fl.AgentDir)) {
+        Log "$($fl.Name) agent sessions and attachments collected" 'OK'
     }
 }
-if (Get-Command code -ErrorAction SilentlyContinue) {
-    $exts = @(& code --list-extensions 2>$null | Where-Object { $_ })
-    [IO.File]::WriteAllLines((Join-Path $devDir 'vscode-extensions.txt'), $exts)
-    Log "VS Code extension list collected ($($exts.Count) extensions)" 'OK'
+foreach ($fl in $flavors) {
+    $cli = Get-VsCodeCli $fl.Cli
+    if ($cli) {
+        $exts = @(& $cli --list-extensions 2>$null | Where-Object { $_ })
+        [IO.File]::WriteAllLines((Join-Path $devDir $fl.Ext), [string[]]$exts)
+        Log "$($fl.Name) extension list collected ($($exts.Count) extensions)" 'OK'
+    }
 }
 $agentPaths = @(
     '.config\opencode', 'opencode.json', 'opencode.jsonc', 'AGENTS.md',
     '.claude', '.claude.json', '.opencode',
-    '.codex', '.gemini', '.cursor', '.aider.conf.yml'
+    '.codex', '.gemini', '.copilot', '.cursor', '.aider.conf.yml'
 )
 $agentRoot = EnsureDir (Join-Path $devDir 'agent-configs')
 foreach ($rel in $agentPaths) {
@@ -487,6 +505,7 @@ foreach ($rel in $sensitivePaths) {
     }
 }
 Write-Host ' Next steps:' -ForegroundColor White
+if ($errors -eq 0) { Set-LastSyncTime $collectStarted }
 Write-Host '   1. Let the folder below finish uploading to your cloud drive (or copy it to a USB drive):' -ForegroundColor Gray
 Write-Host "      $OutputPath" -ForegroundColor White
 Write-Host '   2. On the NEW laptop, run the verifier first:' -ForegroundColor Gray

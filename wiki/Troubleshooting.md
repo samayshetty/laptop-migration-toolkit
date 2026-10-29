@@ -65,6 +65,25 @@ The script needs the `code` CLI. If VS Code was installed *during* the same
 restore run, Windows PATH may not be refreshed - just run the restore again
 (it will skip everything already done and install the extensions).
 
+## Latest VS Code chat replies or attachments are missing
+
+Update the entire `scripts` folder on both laptops to v1.2.1 or later, then follow
+[the existing-backup upgrade steps](Delta-Sync#upgrading-after-an-existing-full-backup).
+Recollect a fresh delta on the old laptop: older zips cannot supply attachments or
+checkpoints that were never collected. Open each project once on the new laptop, close
+both editors, then preview/apply **Fix missing per-folder VS Code chats**.
+
+File dates are not evidence of the latest conversation: opening a stale chat can give
+it a newer timestamp. The repair compares conversation contents instead. Conflicts,
+unreadable journals and unindexed sessions need review; keep the backups and logs.
+Different project paths or usernames may require workspace mapping review.
+
+## Delta collect fails converting "Documents" to SpecialFolder
+
+This is fixed in v1.2.1 (`MyDocuments` / `MyPictures` are the Windows enum names).
+Update the scripts and reopen the GUI. As a workaround, untick **Also include changed
+Desktop / Documents / Pictures**; that option is not needed for chat recovery.
+
 ## Taskbar / theme / colors did not change
 
 - The pre-set skips may have excluded taskbar items because the two laptops run
